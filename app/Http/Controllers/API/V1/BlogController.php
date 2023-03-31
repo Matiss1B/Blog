@@ -15,6 +15,14 @@ class BlogController extends Controller
      */
     public function index(Request $request)
     {
+        return Blog::all();
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create(Request $request)
+    {
         $data = $request->input();
         $img = $request->file("img");
         $blog=[
@@ -22,15 +30,7 @@ class BlogController extends Controller
             "description" => $data['description'],
             "img" => $img->store('images', ['disk' => 'public']),
         ];
-       return Blog::create($blog);
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     */
-    public function create()
-    {
-        //
+        return Blog::create($blog);
     }
 
     /**
