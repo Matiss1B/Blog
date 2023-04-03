@@ -17,5 +17,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 //Blogs
-Route::post('create', [\App\Http\Controllers\API\V1\BlogController::class, "create"]);
-Route::get('blogs',[\App\Http\Controllers\API\V1\BlogController::class, "index"]);
+Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], function () {
+    Route::apiResource('blogs', \App\Http\Controllers\Api\V1\BlogController::class);
+    Route::post('create', [\App\Http\Controllers\API\V1\BlogController::class, "create"]);
+});
