@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Filters\V1\BlogFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\StoreBlogRequest;
+use App\Http\Resources\V1\BlogsCollection;
 use App\Http\Requests\V1\UpdateBlogRequest;
 use App\Models\Blog;
 use Illuminate\Http\Request;
@@ -15,7 +17,10 @@ class BlogController extends Controller
      */
     public function index(Request $request)
     {
-        return Blog::all();
+        $filter = new BlogFilter();
+        $filterItems = $filter->transform($request); //[['column', 'operator', 'value']]
+        $blogs = Blog::where($filterItems);
+        return new BlogsCollection($blogs->paginate()->appends($request->query()));
     }
 
     /**
@@ -28,6 +33,7 @@ class BlogController extends Controller
         $blog=[
             "title" => $data["title"],
             "description" => $data['description'],
+            "category"=> $data['category'],
             "img" => $img->store('images', ['disk' => 'public']),
         ];
         return Blog::create($blog);
@@ -60,11 +66,36 @@ class BlogController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(UpdateBlogRequest $request, Blog $blog)
+    public function update(Request $request, $id)
     {
-        //
-    }
+        $updatedData = [
+            'id' => $request->input('id'),
+            'title' => $request->input('title'),
+            'description' => $request->input('description'),
+            'category' => $request->input('category'),
+            'img'=>$request->file('img'),
+        ];
+        $blog = Blog::findOrFail($updatedData["id"]);
 
+        $blog->title = $updatedData['title'];
+        $blog->description = $updatedData['description'];
+        $blog->category = $updatedData['category'];
+
+        if($blog->save()){
+            return response()->json([
+                "message"=>"Blog updated successfuly!",
+                "error"=> "No"
+                ]);
+
+        }else{
+            return response()->json([
+                "message"=>"Something gone wrong!",
+                "error"=> $blog->save(),
+            ]);
+        }
+
+
+    }
     /**
      * Remove the specified resource from storage.
      */

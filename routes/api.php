@@ -20,4 +20,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], function () {
     Route::apiResource('blogs', \App\Http\Controllers\Api\V1\BlogController::class);
     Route::post('create', [\App\Http\Controllers\API\V1\BlogController::class, "create"]);
+    Route::put('update/{id}', [\App\Http\Controllers\API\V1\BlogController::class, "update"]);
+
 });
