@@ -6,8 +6,7 @@ use App\Filters\V1\BlogFilter;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\V1\StoreBlogRequest;
 use App\Http\Resources\V1\BlogsCollection;
-use App\Http\Requests\V1\UpdateBlogRequest;
-use App\Models\Blog;
+use App\Models\API\V1\Blog;
 use Illuminate\Http\Request;
 
 class BlogController extends Controller
