@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Auth;
 use App\Models\API\V1\Tokens;
 use App\Models\API\V1\User;
 use Illuminate\Http\Request;
@@ -71,9 +72,31 @@ class AuthenticationController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function login(Request $request)
     {
-        //
+        $request->validate([
+            "email"=> "required|max:20|min:5",
+            "password"=> "required|max:20|min:5",
+        ]);
+        $newToken = Str::random(60);
+        $credentials = $request->only("email", "password");
+        $userCheck = User::where('email', $request->only('email'))->first();
+        if(Auth::attempt($credentials)) {
+            $userCheck->update([
+                'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+            $token = [
+                "user_id"=> Auth::id(),
+                "token"=>$newToken,
+            ];
+            Tokens::create($token);
+            return response()->json(["success"=>"OK", "link"=>"home", "user"=>$newToken],200 );
+        }else{
+            $errors = [
+                "invalid" =>'Username or Passeord is incorrect'
+            ];
+            return response()->json(["success"=>"ERR", 'errors'=>$errors], 422);
+        }
     }
 
     /**
