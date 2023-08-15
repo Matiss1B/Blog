@@ -4,10 +4,14 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Filters\V1\BlogFilter;
 use App\Http\Controllers\Controller;
+use App\Models\API\V1\Tokens;
+use App\Http\Controllers\API\V1\TokenController;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\V1\StoreBlogRequest;
 use App\Http\Resources\V1\BlogsCollection;
 use App\Models\API\V1\Blog;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class BlogController extends Controller
 {
@@ -16,26 +20,88 @@ class BlogController extends Controller
      */
     public function index(Request $request)
     {
-        $filter = new BlogFilter();
-        $filterItems = $filter->transform($request); //[['column', 'operator', 'value']]
-        $blogs = Blog::where($filterItems);
-        return new BlogsCollection($blogs->paginate()->appends($request->query()));
-    }
 
+        $data = $request->all();
+        if(isset($data["user"])) {
+            if (self::checkToken($data["user"])) {
+                $filter = new BlogFilter();
+                $filterItems = $filter->transform($request);
+                $blogs = Blog::where($filterItems);
+                return new BlogsCollection($blogs->paginate()->appends($request->query()));
+            } else {
+                return response()->json(["message" => "Access denied!"], 300);
+            }
+            return response()->json(["message" => "Access denied!"], 300);
+        }else{
+            return response()->json(["message" => "User not found, access denied"], 300);
+        }
+    }
+    public static function checkToken($user_token){
+        if(Tokens::where("token", $user_token)->first()){
+            return true;
+        }
+        return false;
+    }
     /**
      * Show the form for creating a new resource.
      */
     public function create(Request $request)
     {
         $data = $request->input();
-        $img = $request->file("img");
-        $blog=[
-            "title" => $data["title"],
-            "description" => $data['description'],
-            "category"=> $data['category'],
-            "img" => $img->store('images', ['disk' => 'public']),
-        ];
-        return Blog::create($blog);
+        if(self::checkToken($data["user"])) {
+            $request->validate([
+                "title"=> "required|max:20|min:4",
+                "description"=> "required|max:1000|min:4",
+                "category"=> "required|max:20|min:4",
+                "phone"=> "max:13",
+                "email"=> "max:20",
+                "img"=> "required"
+            ]);
+            function compressImage($source, $quality)
+            {
+                $info = getimagesize($source);
+                if ($info['mime'] == 'image/jpeg') {
+                    $image = imagecreatefromjpeg($source);
+                } elseif ($info['mime'] == 'image/png') {
+                    $image = imagecreatefrompng($source);
+                } elseif ($info['mime'] == 'image/gif') {
+                    $image = imagecreatefromgif($source);
+                } else {
+                    return false; // Unsupported image format
+                }
+
+                ob_start(); // Start output buffering
+                imagejpeg($image, null, $quality); // Output the compressed image to the buffer
+                imagedestroy($image);
+                $compressedImage = ob_get_clean(); // Get the buffer content and clean the buffer
+                return $compressedImage;
+            }
+
+            $img = $request->file("img");
+            $compressedImage = compressImage($img, 15);
+            $destinationPath = 'images/' . Str::random(60) . '.jpg'; // Replace with the desired destination path within the disk
+            Storage::disk('public')->put($destinationPath, $compressedImage);
+            //Select user by token
+            $user = Tokens::where("token", $data['user'])->first();
+            $user = $user->user_id;
+
+            $blog = [
+                "title" => $data["title"],
+                "description" => $data['description'],
+                "category" => $data['category'],
+                "email" => $data['email'],
+                "phone" => $data['phone'],
+                "author"=>$user,
+                "img" => $destinationPath,
+            ];
+            if(Blog::create($blog)){
+                return response()->json(["message"=> "Blog created successfully"], 200);
+            }else{
+                return response()->json(["message"=> "Something gone wrong", "error"=>Blog::create($blog)], 300);
+            }
+        }else{
+            return response()->json(["message"=> "Access denied, please log in!"], 300);
+        }
     }
 
     /**

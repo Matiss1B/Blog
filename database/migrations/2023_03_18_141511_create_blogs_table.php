@@ -17,6 +17,9 @@ return new class extends Migration
             $table->string('description');
             $table->string('img');
             $table->string('category');
+            $table->integer('author');
+            $table->string('phone')->nullable();
+            $table->string('email')->nullable();
             $table->timestamps();
         });
     }

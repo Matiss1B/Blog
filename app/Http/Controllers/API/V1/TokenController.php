@@ -14,7 +14,7 @@ class TokenController extends Controller
         if($check){
             return response()->json(["success"=>"OK", "link"=>"home"], 200);
         }else{
-            return response()->json(["success"=>"ERR"], 300);
+            return response()->json(["success"=>"ERR", "message"=>"You do not have permissions to this data"], 300);
         }
     }
 }

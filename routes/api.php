@@ -18,10 +18,13 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 //Blogs
 Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], function () {
+    //Token
+    Route::post('/checkToken',[\App\Http\Controllers\API\V1\TokenController::class, "check"]);
     //Authentification
+    Route::apiResource('users', \App\Http\Controllers\Api\V1\AuthenticationController::class);
     Route::post('/register',[\App\Http\Controllers\API\V1\AuthenticationController::class, "register"]);
     Route::post('/login',[\App\Http\Controllers\API\V1\AuthenticationController::class, "login"]);
-    Route::post('/fast_login',[\App\Http\Controllers\API\V1\TokenController::class, "check"]);
+    Route::post('/logout',[\App\Http\Controllers\API\V1\AuthenticationController::class, "logout"]);
     //Blog
     Route::apiResource('blogs', \App\Http\Controllers\Api\V1\BlogController::class);
     Route::post('create', [\App\Http\Controllers\API\V1\BlogController::class, "create"]);

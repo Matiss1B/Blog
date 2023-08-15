@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers\API\V1;
 
+use App\Filters\V1\UserFilter;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\V1\UsersCollection;
 use Illuminate\Support\Facades\Auth;
 use App\Models\API\V1\Tokens;
 use App\Models\API\V1\User;
@@ -15,6 +17,13 @@ class AuthenticationController extends Controller
     /**
      * Display a listing of the resource.
      */
+    public function index(Request $request)
+    {
+        $filter = new UserFilter();
+        $filterItems = $filter->transform($request); //[['column', 'operator', 'value']]
+        $users = User::where($filterItems);
+        return new UsersCollection($users->paginate()->appends($request->query()));
+    }
     public function register(Request $request){
         //Validate
         $request->validate([
@@ -49,12 +58,6 @@ class AuthenticationController extends Controller
                 $newToken = Str::random(60);
                 $this->create($user);
                 $newUser = User::where('email', $email)->first();
-                //Create access token
-                $token = [
-                    "user_id"=> $newUser->id,
-                    "token"=>$newToken,
-                ];
-                Tokens::create($token);
                 //Return in user is created
                 return response()->json(["success"=>"OK", "link"=>"home", "user"=>$newToken], 200);
 
@@ -102,9 +105,15 @@ class AuthenticationController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
-    {
-        //
+    public function logout(Request $request){
+        $data = $request->all();
+        if(Tokens::where("token", $data["user"])->delete()) {
+            Auth::logout();
+            return response()->json(["status" => "ok", "link"=>""], 200);
+        }else{
+            return response()->json(["status" => "err", "message" => "Something gone wrong"], 403);
+
+        }
     }
 
     /**
