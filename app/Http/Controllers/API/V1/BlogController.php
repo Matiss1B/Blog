@@ -6,6 +6,7 @@ use App\Filters\V1\BlogFilter;
 use App\Http\Controllers\Controller;
 use App\Models\API\V1\Tokens;
 use App\Http\Controllers\API\V1\TokenController;
+use App\Models\API\V1\User;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\V1\StoreBlogRequest;
 use App\Http\Resources\V1\BlogsCollection;
@@ -26,8 +27,18 @@ class BlogController extends Controller
             if (self::checkToken($data["user"])) {
                 $filter = new BlogFilter();
                 $filterItems = $filter->transform($request);
-                $blogs = Blog::where($filterItems);
-                return new BlogsCollection($blogs->paginate()->appends($request->query()));
+                $blogs = Blog::where($filterItems)
+                    ->paginate()
+                    ->appends($request->query());
+                foreach ($blogs as $blog) {
+                    $author = $blog->author;
+                    $authorUser = User::find($author);
+                    if ($authorUser) {
+                        $blog->author = $authorUser->name;
+                    }
+                }
+
+                return new BlogsCollection($blogs);
             } else {
                 return response()->json(["message" => "Access denied!"], 300);
             }
@@ -50,7 +61,7 @@ class BlogController extends Controller
         $data = $request->input();
         if(self::checkToken($data["user"])) {
             $request->validate([
-                "title"=> "required|max:20|min:4",
+                "title"=> "required|max:50|min:4",
                 "description"=> "required|max:1000|min:4",
                 "category"=> "required|max:20|min:4",
                 "phone"=> "max:13",
