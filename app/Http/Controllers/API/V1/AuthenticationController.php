@@ -59,7 +59,7 @@ class AuthenticationController extends Controller
                 $this->create($user);
                 $newUser = User::where('email', $email)->first();
                 //Return in user is created
-                return response()->json(["success"=>"OK", "link"=>"home", "user"=>$newToken], 200);
+                return response()->json(["success"=>"OK", "link"=>"home", "user"=>$newToken, "id"=>$newUser->id], 200);
 
         }
     }

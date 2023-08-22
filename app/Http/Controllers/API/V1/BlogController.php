@@ -34,7 +34,7 @@ class BlogController extends Controller
                     $author = $blog->author;
                     $authorUser = User::find($author);
                     if ($authorUser) {
-                        $blog->author = $authorUser->name;
+                        $blog->author_name = $authorUser->name;
                     }
                 }
 
