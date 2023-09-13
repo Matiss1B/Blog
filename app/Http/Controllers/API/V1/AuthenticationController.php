@@ -11,6 +11,7 @@ use App\Models\API\V1\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Laravel\Socialite\Facades\Socialite;
 
 class AuthenticationController extends Controller
 {
@@ -119,16 +120,40 @@ class AuthenticationController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
-    {
-        //
+    public function googleredirect(Request $request){
+        return Socialite::driver('google')->redirect();
     }
+    public function googlecallback(Request $request){
 
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $user = Socialite::driver('google')->stateless()->user();
+        $userCheck = User::where('google_id', $user->getId())->first();
+        if(!$userCheck){
+            User::create([
+                'name'=>$user->getName(),
+                'email'=> $user->getEmail(),
+                'google_id'=>$user->getId(),
+            ]);
+            return response()->json(["message" => "User logged in"], 300);
+        }else{
+            return response()->json(["message" => "User logged in"], 300);
+        }
+    }
+    public function Fbredirect(Request $request){
+        return Socialite::driver('facebook')->redirect();
+    }
+    public function Fbcallback(Request $request){
+        $user = Socialite::driver('facebook')->stateless()->user();
+        $userCheck = User::where('facebook_id', $user->getId())->first();
+        if(!$userCheck){
+            User::create([
+                'name'=>$user->getName(),
+                'email'=> $user->getEmail(),
+                'facebook_id'=>$user->getId(),
+            ]);
+            return response()->json(["message" => "User logged in"], 300);
+        }else{
+            return response()->json(["message" => "User logged in"], 300);
+        }
+
     }
 }
