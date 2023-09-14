@@ -28,5 +28,5 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
     //Blog
     Route::apiResource('blogs', \App\Http\Controllers\Api\V1\BlogController::class);
     Route::post('create', [\App\Http\Controllers\API\V1\BlogController::class, "create"]);
-    Route::put('/update/{id}', [\App\Http\Controllers\API\V1\BlogController::class, "update"]);
-});
+    Route::post("/edit",[\App\Http\Controllers\API\V1\BlogController::class, 'update']);
+})->middleware("Che");

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1;
 use App\Filters\V1\BlogFilter;
 use App\Http\Controllers\Controller;
 use App\Models\API\V1\Tokens;
+use App\Http\Middleware\CheckToken;
 use App\Http\Controllers\API\V1\TokenController;
 use App\Models\API\V1\User;
 use Illuminate\Support\Facades\Storage;
@@ -23,39 +24,43 @@ class BlogController extends Controller
     {
 
         $data = $request->all();
-        if(isset($data["user"])) {
-            if (self::checkToken($data["user"])) {
-                $filter = new BlogFilter();
-                $filterItems = $filter->transform($request);
-                $blogs = Blog::where($filterItems)
-                    ->paginate()
-                    ->appends($request->query());
-                foreach ($blogs as $blog) {
-                    $author = $blog->author;
-                    $authorUser = User::find($author);
-                    if ($authorUser) {
-                        $blog->author_name = $authorUser->name;
-                    }
-                }
-
-                return new BlogsCollection($blogs);
-            } else {
-                return response()->json(["message" => "Access denied!"], 300);
+        $filter = new BlogFilter();
+        $filterItems = $filter->transform($request);
+        $blogs = Blog::where($filterItems)
+            ->paginate()
+            ->appends($request->query());
+        foreach ($blogs as $blog) {
+            $author = $blog->author;
+            $authorUser = User::find($author);
+            if ($authorUser) {
+                $blog->author_name = $authorUser->name;
             }
-            return response()->json(["message" => "Access denied!"], 300);
-        }else{
-            return response()->json(["message" => "User not found, access denied"], 300);
         }
-    }
-    public static function checkToken($user_token){
-        if(Tokens::where("token", $user_token)->first()){
-            return true;
-        }
-        return false;
+
+        return new BlogsCollection($blogs);
     }
     /**
      * Show the form for creating a new resource.
      */
+    private function compressImage($source, $quality)
+    {
+        $info = getimagesize($source);
+        if ($info['mime'] == 'image/jpeg') {
+            $image = imagecreatefromjpeg($source);
+        } elseif ($info['mime'] == 'image/png') {
+            $image = imagecreatefrompng($source);
+        } elseif ($info['mime'] == 'image/gif') {
+            $image = imagecreatefromgif($source);
+        } else {
+            return false; // Unsupported image format
+        }
+
+        ob_start(); // Start output buffering
+        imagejpeg($image, null, $quality); // Output the compressed image to the buffer
+        imagedestroy($image);
+        $compressedImage = ob_get_clean(); // Get the buffer content and clean the buffer
+        return $compressedImage;
+    }
     public function create(Request $request)
     {
         $data = $request->input();
@@ -68,28 +73,9 @@ class BlogController extends Controller
                 "email"=> "max:20",
                 "img"=> "required"
             ]);
-            function compressImage($source, $quality)
-            {
-                $info = getimagesize($source);
-                if ($info['mime'] == 'image/jpeg') {
-                    $image = imagecreatefromjpeg($source);
-                } elseif ($info['mime'] == 'image/png') {
-                    $image = imagecreatefrompng($source);
-                } elseif ($info['mime'] == 'image/gif') {
-                    $image = imagecreatefromgif($source);
-                } else {
-                    return false; // Unsupported image format
-                }
-
-                ob_start(); // Start output buffering
-                imagejpeg($image, null, $quality); // Output the compressed image to the buffer
-                imagedestroy($image);
-                $compressedImage = ob_get_clean(); // Get the buffer content and clean the buffer
-                return $compressedImage;
-            }
 
             $img = $request->file("img");
-            $compressedImage = compressImage($img, 15);
+            $compressedImage = $this->compressImage($img, 15);
             $destinationPath = 'images/' . Str::random(60) . '.jpg'; // Replace with the desired destination path within the disk
             Storage::disk('public')->put($destinationPath, $compressedImage);
             //Select user by token
@@ -142,35 +128,38 @@ class BlogController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, $id)
+    public function update(Request $request)
     {
         $updatedData = [
             'id' => $request->input('id'),
             'title' => $request->input('title'),
             'description' => $request->input('description'),
             'category' => $request->input('category'),
-            'img'=>$request->file('img'),
+            'img' => $request->file("img")
         ];
-        $blog = Blog::findOrFail($updatedData["id"]);
+            $img = $request->file("img");
+            $compressedImage = $this->compressImage($img, 15);
+            $destinationPath = 'images/' . Str::random(60) . '.jpg'; // Replace with the desired destination path within the disk
+            Storage::disk('public')->put($destinationPath, $compressedImage);
+            $blog = Blog::findOrFail($updatedData["id"]);
+            unlink(storage_path('app/public/'. $blog->img));
+            $blog->img = $destinationPath;
+            $blog->title = $updatedData['title'];
+            $blog->description = $updatedData['description'];
+            $blog->category = $updatedData['category'];
 
-        $blog->title = $updatedData['title'];
-        $blog->description = $updatedData['description'];
-        $blog->category = $updatedData['category'];
-
-        if($blog->save()){
-            return response()->json([
-                "message"=>"Blog updated successfuly!",
-                "error"=> "No"
+            if ($blog->save()) {
+                return response()->json([
+                    "message" => "Blog updated successfuly!",
+                    "error" => "No"
                 ]);
 
-        }else{
-            return response()->json([
-                "message"=>"Something gone wrong!",
-                "error"=> $blog->save(),
-            ]);
-        }
-
-
+            } else {
+                return response()->json([
+                    "message" => "Something gone wrong!",
+                    "error" => $blog->save(),
+                ]);
+            }
     }
     /**
      * Remove the specified resource from storage.
