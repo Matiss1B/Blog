@@ -22,10 +22,10 @@ class ApiFilter{
         foreach ($queries as $queryKey => $query){
             if(is_array($query)){
                 foreach ($query as $key => $value) {
-                    if($key == 0){
-                        $key = "=";
+                    $symbol = array_search($key, $this->allowedSymbols);
+                    if ($symbol !== false) {
+                        $finalQueries[] = [$queryKey, $key, $value];
                     }
-                    $finalQueries[] = [$queryKey, $key, $value];
                     break;
                 }
             }else{

@@ -26,7 +26,6 @@ class BlogController extends Controller
         $data = $request->all();
         $filter = new BlogFilter();
         $filterItems = $filter->transform($request);
-        dd($filterItems);
         $blogs = Blog::where($filterItems)
             ->paginate()
             ->appends($request->query());
