@@ -4,29 +4,37 @@ use Illuminate\Http\Request;
 
 class ApiFilter{
     protected $allowed = [];
-    protected $columnMap = [];
-    protected $operatorMap = [
-        'eq'=>'=',
-        'lt'=>'<',
-        'lte'=>'<=',
-        'gt'=>'>',
-        'gte'=>'>='
+    private $allowedSymbols = [
+        ">",
+        "<",
     ];
     public function transform (Request $request) {
-        $eloQuery = [];
-        foreach ($this->allowed as $parm => $operators) {
-            $query = $request->query($parm);
-            if (!isset($query)) {
+        $queries = [];
+        $finalQueries = [];
+        foreach ($this->allowed as $param) {
+            $query = $request->input($param);
+           if ($query == null) {
                 continue;
-            }
-            $column = $this->columnMap [$parm] ?? $parm;
-            foreach ($operators as $operator) {
-                if (isset($query [$operator])) {
-                    $eloQuery [] = [$column, $this->operatorMap[$operator], $query [$operator]];
-                }
+            }else{
+                $queries[$param] = $query;
             }
         }
-        return $eloQuery;
+        foreach ($queries as $queryKey => $query){
+            if(is_array($query)){
+                foreach ($query as $key => $value) {
+                    if($key == 0){
+                        $key = "=";
+                    }
+                    $finalQueries[] = [$queryKey, $key, $value];
+                    break;
+                }
+            }else{
+                $finalQueries[] = [$queryKey, "=", $query];
+            }
+        }
+        return $finalQueries;
+
     }
 }
+
 
