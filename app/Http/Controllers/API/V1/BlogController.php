@@ -89,6 +89,7 @@ class BlogController extends Controller
                 "email" => $data['email'],
                 "phone" => $data['phone'],
                 "author"=>Session::get("user_id"),
+                "user_id"=>Session::get("user_id"),
                 "img" => $destinationPath,
             ];
             if(Blog::create($blog)){

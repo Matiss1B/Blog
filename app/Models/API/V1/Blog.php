@@ -13,6 +13,7 @@ class Blog extends Model
         'description',
         'category',
         'author',
+        'user_id',
         'phone',
         'email',
         'img',

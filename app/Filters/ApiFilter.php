@@ -1,6 +1,8 @@
 <?php
 namespace App\Filters;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
+
 
 class ApiFilter{
     protected $allowed = [];
@@ -18,7 +20,10 @@ class ApiFilter{
            if ($query == null) {
                 continue;
             }else{
-                $queries[$param] = $query;
+               //Because with "user", wee pass token to controller
+               if($param !== "user") {
+                   $queries[$param] = $query;
+               }
             }
         }
         //Loop through all alowed url queries, transform and push into $finalQueries array
@@ -36,6 +41,14 @@ class ApiFilter{
             }else{
                 $finalQueries[] = [$queryKey, "=", $query];
             }
+        }
+        if(array_key_exists("author", $request->query())){
+            $query = $request->query();
+            $author = $query["author"];
+            if($author == "this"){
+                $author = Session::get('user_id');
+            }
+            $finalQueries[] = ["user_id", "=", $author];
         }
         return $finalQueries;
 

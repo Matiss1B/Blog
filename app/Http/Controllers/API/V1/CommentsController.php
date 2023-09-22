@@ -17,6 +17,14 @@ class CommentsController extends Controller
     {
         $filter = new CommentFilter();
         $filterItems = $filter->transform($request);
+        if(Comments::where($filterItems)->get()->isEmpty()){
+            return response()->json(
+                [
+                    "statuss"=>200,
+                    "message"=>"Could not find any comments, please check given params"
+                ]
+            );
+        }
         return Comments::where($filterItems)->get();
     }
 
@@ -31,7 +39,7 @@ class CommentsController extends Controller
         $data =[
             "comment"=>$request->input("comment"),
             "blog_id"=>$request->input("blog"),
-            "user"=>Session::get('user_id'),
+            "user_id"=>Session::get('user_id'),
         ];
         if(Comments::create($data)){
             return response()->json(["message"=>"Comment created!"], 200);
