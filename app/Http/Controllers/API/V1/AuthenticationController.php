@@ -125,8 +125,11 @@ class AuthenticationController extends Controller
             "password"=> "max:20|min:9",
             "surname"=>"max:20|min:5"
         ]);
-        $data = new RequestFilter(["email", "name", "password", "surname"]);
+        $data = new RequestFilter(["email", "name", "password", "surname", "img"]);
         $data = $data->filter($request);
+        if (isset($data["password"])){
+            $data["password"] = Hash::make($data['password']);
+        }
        if(User::where("id", Session::get("user_id"))->update($data)){
            return response()->json(
                [

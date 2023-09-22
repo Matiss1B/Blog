@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Filters\V1\BlogFilter;
+use App\Functions\ImagesFunctions;
 use App\Http\Controllers\Controller;
 use App\Models\API\V1\Tokens;
 use App\Http\Middleware\CheckToken;
@@ -18,6 +19,10 @@ use Illuminate\Support\Str;
 
 class BlogController extends Controller
 {
+    private $imagesFunctions;
+    public function __construct(){
+        $this->imagesFunctions = new ImagesFunctions();
+    }
     /**
      * Display a listing of the resource.
      */
@@ -41,25 +46,7 @@ class BlogController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    private function compressImage($source, $quality)
-    {
-        $info = getimagesize($source);
-        if ($info['mime'] == 'image/jpeg') {
-            $image = imagecreatefromjpeg($source);
-        } elseif ($info['mime'] == 'image/png') {
-            $image = imagecreatefrompng($source);
-        } elseif ($info['mime'] == 'image/gif') {
-            $image = imagecreatefromgif($source);
-        } else {
-            return false; // Unsupported image format
-        }
 
-        ob_start(); // Start output buffering
-        imagejpeg($image, null, $quality); // Output the compressed image to the buffer
-        imagedestroy($image);
-        $compressedImage = ob_get_clean(); // Get the buffer content and clean the buffer
-        return $compressedImage;
-    }
     public function create(Request $request)
     {
         $data = $request->input();
@@ -73,12 +60,6 @@ class BlogController extends Controller
             ]);
 
             $img = $request->file("img");
-            $compressedImage = $this->compressImage($img, 15);
-            $destinationPath = 'images/' . Str::random(60) . '.jpg'; // Replace with the desired destination path within the disk
-            Storage::disk('public')->put($destinationPath, $compressedImage);
-            //Select user by token
-
-
             $blog = [
                 "title" => $data["title"],
                 "description" => $data['description'],
@@ -87,7 +68,7 @@ class BlogController extends Controller
                 "phone" => $data['phone'],
                 "author"=>Session::get("user_id"),
                 "user_id"=>Session::get("user_id"),
-                "img" => $destinationPath,
+                "img" => $this->imagesFunctions->compress($img, 15),
             ];
             if(Blog::create($blog)){
                 return response()->json(["message"=> "Blog created successfully"], 200);
