@@ -5,6 +5,7 @@ namespace App\Http\Middleware;
 use App\Models\API\V1\Tokens;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
 use Symfony\Component\HttpFoundation\Response;
 
 class CheckToken
@@ -17,8 +18,9 @@ class CheckToken
     public function handle($request, Closure $next)
     {
         // Check the token using the checkToken method
-        if (self::checkToken($request->input('user'))) {
+        if (self::checkToken($request->input('user')) !== false) {
             // Token is valid, proceed with the request
+            Session::put("user_id",self::checkToken($request->input('user')));
             return $next($request);
         } else {
             // Token is invalid, handle the error
@@ -28,8 +30,9 @@ class CheckToken
 
     public static function checkToken($user)
     {
-        if(Tokens::where("token", $user)->first()){
-            return true;
+        $token = Tokens::where("token", $user)->first();
+        if($token){
+            return $token->user_id;
         }
         return false;
     }

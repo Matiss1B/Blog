@@ -26,8 +26,14 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
     Route::post('/register',[\App\Http\Controllers\API\V1\AuthenticationController::class, "register"]);
     Route::post('/login',[\App\Http\Controllers\API\V1\AuthenticationController::class, "login"]);
     Route::post('/logout',[\App\Http\Controllers\API\V1\AuthenticationController::class, "logout"]);
-    //Blog
+    //Blogs
     Route::apiResource('blogs', \App\Http\Controllers\Api\V1\BlogController::class)->middleware(CheckToken::class);;
     Route::post('create', [\App\Http\Controllers\API\V1\BlogController::class, "create"])->middleware(CheckToken::class);;
     Route::post("/edit",[\App\Http\Controllers\API\V1\BlogController::class, 'update'])->middleware(CheckToken::class);
+    //Comments
+    Route::apiResource('comments', \App\Http\Controllers\Api\V1\CommentsController::class)->middleware(CheckToken::class);
+    Route::post('/comment/create', [\App\Http\Controllers\API\V1\CommentsController::class, "create"])->middleware(CheckToken::class);
+    Route::delete('/comment/delete/{comment}',[\App\Http\Controllers\API\V1\CommentsController::class, "destroy"])->middleware(CheckToken::class);
+
+
 });

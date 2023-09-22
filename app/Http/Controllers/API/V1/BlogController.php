@@ -8,6 +8,7 @@ use App\Models\API\V1\Tokens;
 use App\Http\Middleware\CheckToken;
 use App\Http\Controllers\API\V1\TokenController;
 use App\Models\API\V1\User;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\V1\StoreBlogRequest;
 use App\Http\Resources\V1\BlogsCollection;
@@ -65,7 +66,6 @@ class BlogController extends Controller
     public function create(Request $request)
     {
         $data = $request->input();
-        if(self::checkToken($data["user"])) {
             $request->validate([
                 "title"=> "required|max:50|min:4",
                 "description"=> "required|max:1000|min:4",
@@ -80,8 +80,7 @@ class BlogController extends Controller
             $destinationPath = 'images/' . Str::random(60) . '.jpg'; // Replace with the desired destination path within the disk
             Storage::disk('public')->put($destinationPath, $compressedImage);
             //Select user by token
-            $user = Tokens::where("token", $data['user'])->first();
-            $user = $user->user_id;
+
 
             $blog = [
                 "title" => $data["title"],
@@ -89,7 +88,7 @@ class BlogController extends Controller
                 "category" => $data['category'],
                 "email" => $data['email'],
                 "phone" => $data['phone'],
-                "author"=>$user,
+                "author"=>Session::get("user_id"),
                 "img" => $destinationPath,
             ];
             if(Blog::create($blog)){
@@ -97,9 +96,7 @@ class BlogController extends Controller
             }else{
                 return response()->json(["message"=> "Something gone wrong", "error"=>Blog::create($blog)], 300);
             }
-        }else{
-            return response()->json(["message"=> "Access denied, please log in!"], 300);
-        }
+
     }
 
     /**
