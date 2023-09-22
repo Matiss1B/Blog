@@ -27,19 +27,16 @@ class BlogController extends Controller
         $data = $request->all();
         $filter = new BlogFilter();
         $filterItems = $filter->transform($request);
-        dd($filterItems);
-        $blogs = Blog::where($filterItems)
-            ->paginate()
-            ->appends($request->query());
-        foreach ($blogs as $blog) {
-            $author = $blog->author;
-            $authorUser = User::find($author);
-            if ($authorUser) {
-                $blog->author_name = $authorUser->name;
-            }
+        $blogs = Blog::where($filterItems)->get();
+        if($blogs->isEmpty()){
+            return response()->json(
+                [
+                    "statuss"=>200,
+                    "message"=>"Could not find any blogs, please check given params",
+                ]
+            );
         }
-
-        return new BlogsCollection($blogs);
+        return $blogs;
     }
     /**
      * Show the form for creating a new resource.

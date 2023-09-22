@@ -4,12 +4,14 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Filters\V1\UserFilter;
 use App\Http\Controllers\Controller;
+use App\Filters\RequestFilter;
 use App\Http\Resources\V1\UsersCollection;
 use Illuminate\Support\Facades\Auth;
 use App\Models\API\V1\Tokens;
 use App\Models\API\V1\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
@@ -115,6 +117,31 @@ class AuthenticationController extends Controller
             return response()->json(["status" => "err", "message" => "Something gone wrong"], 403);
 
         }
+    }
+    public function edit(Request $request){
+         $request->validate([
+            "email"=> "max:20|min:5",
+            "name"=> "max:20|min:5",
+            "password"=> "max:20|min:9",
+            "surname"=>"max:20|min:5"
+        ]);
+        $data = new RequestFilter(["email", "name", "password", "surname"]);
+        $data = $data->filter($request);
+       if(User::where("id", Session::get("user_id"))->update($data)){
+           return response()->json(
+               [
+                   "statuss"=>200,
+                   "message"=>"Profile updated successfully!"
+               ]
+           );
+       }else{
+           return response()->json(
+               [
+                   "statuss"=>300,
+                   "message"=>"Something gone wrong!"
+               ]
+           );
+       }
     }
 
     /**
