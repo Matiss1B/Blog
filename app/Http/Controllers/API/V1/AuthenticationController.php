@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Filters\V1\UserFilter;
+use App\Functions\ImagesFunctions;
 use App\Http\Controllers\Controller;
 use App\Filters\RequestFilter;
 use App\Http\Resources\V1\UsersCollection;
@@ -17,6 +18,11 @@ use Laravel\Socialite\Facades\Socialite;
 
 class AuthenticationController extends Controller
 {
+    protected $imagesFunctions;
+    public function __construct(){
+        $this->imagesFunctions = new ImagesFunctions();
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -125,10 +131,15 @@ class AuthenticationController extends Controller
             "password"=> "max:20|min:9",
             "surname"=>"max:20|min:5"
         ]);
+         $user = User::where("id", Session::get("user_id"))->first();
         $data = new RequestFilter(["email", "name", "password", "surname", "img"]);
         $data = $data->filter($request);
         if (isset($data["password"])){
             $data["password"] = Hash::make($data['password']);
+        }
+        if (isset($data["img"])){
+            $data["img"] = $this->imagesFunctions->compress($data["img"], 15);
+            unlink(storage_path('app/public/'.$user->img));
         }
        if(User::where("id", Session::get("user_id"))->update($data)){
            return response()->json(

@@ -12,14 +12,22 @@ class RequestFilter{
     }
 
     public function filter($request){
-        $filteredArrray = [];
-        $requestArray = json_decode(json_encode($request->input()), true);
-        foreach ($requestArray as $key => $unit){
+        $filteredArray = [];
+        if ($request->hasFile('img')) {
+            $file = $request->file('img');
+            $filteredArray['img'] = $file;
+        }
+        $requestInputs = json_decode(json_encode($request->input()), true);
+        foreach ($requestInputs  as $key => $unit){
             if(in_array($key, $this->allowed)){
-                $filteredArrray[$key] = $unit;
+                $filteredArray[$key] = $unit;
+            }
+            if ($request->hasFile('img')) {
+                $file = $request->file('img');
+                $filteredArray['img'] = $file;
             }
         }
-        return $filteredArrray;
+        return $filteredArray;
     }
 }
 
