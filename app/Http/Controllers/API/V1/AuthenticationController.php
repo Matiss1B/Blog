@@ -199,4 +199,7 @@ class AuthenticationController extends Controller
         }
 
     }
+    public function get(){
+        return User::find(Session::get("user_id"));
+    }
 }
