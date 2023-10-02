@@ -100,6 +100,8 @@ class AuthenticationController extends Controller
             $token = [
                 "user_id"=> Auth::id(),
                 "token"=>$newToken,
+                "created_at"=>date('Y-m-d H:i:s'),
+                "updated_at"=>date('Y-m-d H:i:s'),
             ];
             Tokens::create($token);
             return response()->json(["success"=>"OK", "link"=>"home", "user"=>$newToken],200 );

@@ -15,8 +15,9 @@ return new class extends Migration
             $table->id();
             $table->integer('user_id');
             $table->string('token')->unique();
-            $table->timestamps();
-        });
+            $table->dateTime("updated_at");
+            $table->dateTime("created_at");
+            });
     }
 
     /**
