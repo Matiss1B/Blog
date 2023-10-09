@@ -26,8 +26,8 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
     Route::post('/register',[\App\Http\Controllers\API\V1\AuthenticationController::class, "register"]);
     Route::post('/login',[\App\Http\Controllers\API\V1\AuthenticationController::class, "login"]);
     Route::post('/logout',[\App\Http\Controllers\API\V1\AuthenticationController::class, "logout"]);
-    Route::post('/user/get',[\App\Http\Controllers\API\V1\AuthenticationController::class, "get"])->middleware(CheckToken::class);
-    Route::post('/user/edit',[\App\Http\Controllers\API\V1\AuthenticationController::class, "edit"])->middleware(CheckToken::class);
+    Route::get('/user/get',[\App\Http\Controllers\API\V1\AuthenticationController::class, "get"])->middleware(CheckToken::class);
+    Route::put('/user/edit',[\App\Http\Controllers\API\V1\AuthenticationController::class, "edit"])->middleware(CheckToken::class);
     //Blogs
     Route::apiResource('blogs', \App\Http\Controllers\Api\V1\BlogController::class)->middleware(CheckToken::class);;
     Route::post('create', [\App\Http\Controllers\API\V1\BlogController::class, "create"])->middleware(CheckToken::class);;

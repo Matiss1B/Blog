@@ -58,7 +58,6 @@ class BlogController extends Controller
                 "email"=> "max:20",
                 "img"=> "required"
             ]);
-
             $img = $request->file("img");
             $blog = [
                 "title" => $data["title"],
