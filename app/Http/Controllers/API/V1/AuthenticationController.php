@@ -141,7 +141,9 @@ class AuthenticationController extends Controller
         }
         if (isset($data["img"])){
             $data["img"] = $this->imagesFunctions->compress($data["img"], 15);
-            unlink(storage_path('app/public/'.$user->img));
+            if(isset($user->img)) {
+                unlink(storage_path('app/public/' . $user->img));
+            }
         }
        if(User::where("id", Session::get("user_id"))->update($data)){
            return response()->json(

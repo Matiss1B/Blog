@@ -111,7 +111,6 @@ class BlogController extends Controller
             'title' => $request->input('title'),
             'description' => $request->input('description'),
             'category' => $request->input('category'),
-            'img' => $request->file("img")
         ];
             $img = $request->file("img");
             $compressedImage = $this->compressImage($img, 15);
