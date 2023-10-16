@@ -32,7 +32,7 @@ class BlogController extends Controller
         $data = $request->all();
         $filter = new BlogFilter();
         $filterItems = $filter->transform($request);
-        $blogs = Blog::where($filterItems)->get();
+        $blogs = Blog::with('user')->where($filterItems)->get();
         if($blogs->isEmpty()){
             return response()->json(
                 [
@@ -84,6 +84,7 @@ class BlogController extends Controller
     {
         //
     }
+
 
     /**
      * Display the specified resource.

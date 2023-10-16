@@ -141,7 +141,7 @@ class AuthenticationController extends Controller
         }
         if (isset($data["img"])){
             $data["img"] = $this->imagesFunctions->compress($data["img"], 15);
-            if(isset($user->img)) {
+            if(!empty($user->img)) {
                 unlink(storage_path('app/public/' . $user->img));
             }
         }
@@ -201,7 +201,8 @@ class AuthenticationController extends Controller
         }
 
     }
-    public function get(){
-        return User::find(Session::get("user_id"));
+    public function get()
+    {
+        return User::with('blogs')->find(Session::get("user_id"));
     }
 }

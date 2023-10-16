@@ -35,6 +35,10 @@ class User extends Authenticatable
         'password',
         'remember_token',
     ];
+    public function blogs()
+    {
+        return $this->hasMany(Blog::class);
+    }
 
     /**
      * The attributes that should be cast.
