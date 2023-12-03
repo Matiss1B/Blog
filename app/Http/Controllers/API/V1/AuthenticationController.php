@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1;
 use App\Filters\V1\UserFilter;
 use App\Functions\ImagesFunctions;
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Cache;
 use App\Filters\RequestFilter;
 use App\Http\Resources\V1\UsersCollection;
 use Illuminate\Support\Facades\Auth;
@@ -79,6 +80,14 @@ class AuthenticationController extends Controller
             'password'=> Hash::make($data['password']),
             'surname'=> $data["surname"],
         ]);
+    }
+    public function redirectPasswordReset($token){
+        if (Cache::get('temporary_token:' . $token)) {
+            Cache::forget('temporary_token:' . $token);
+            return Redirect::to('https://localhost:3000/password-reset/'.$token);
+        } else {
+            return response()->json(['valid' => false]);
+        }
     }
 
     /**
