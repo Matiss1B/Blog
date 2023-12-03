@@ -52,7 +52,7 @@ class BlogController extends Controller
         $data = $request->input();
             $request->validate([
                 "title"=> "required|max:50|min:4",
-                "description"=> "required|max:1000|min:4",
+                "description"=> "required|max:4000|min:4",
                 "category"=> "required|max:20|min:4",
                 "phone"=> "max:13",
                 "email"=> "max:20",
@@ -114,12 +114,11 @@ class BlogController extends Controller
             'category' => $request->input('category'),
         ];
             $img = $request->file("img");
-            $compressedImage = $this->compressImage($img, 15);
-            $destinationPath = 'images/' . Str::random(60) . '.jpg'; // Replace with the desired destination path within the disk
-            Storage::disk('public')->put($destinationPath, $compressedImage);
             $blog = Blog::findOrFail($updatedData["id"]);
-            unlink(storage_path('app/public/'. $blog->img));
-            $blog->img = $destinationPath;
+            if(isset($img)) {
+                unlink(storage_path('app/public/' . $blog->img));
+                $blog->img = $this->imagesFunctions->compress($img, 15);;
+            }
             $blog->title = $updatedData['title'];
             $blog->description = $updatedData['description'];
             $blog->category = $updatedData['category'];
