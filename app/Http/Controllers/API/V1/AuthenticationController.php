@@ -4,6 +4,7 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Filters\V1\UserFilter;
 use App\Functions\ImagesFunctions;
+use Illuminate\Support\Facades\Redirect;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\Filters\RequestFilter;
@@ -81,14 +82,47 @@ class AuthenticationController extends Controller
             'surname'=> $data["surname"],
         ]);
     }
-    public function redirectPasswordReset($token){
-        if (Cache::get('temporary_token:' . $token)) {
-            Cache::forget('temporary_token:' . $token);
-            return Redirect::to('https://localhost:3000/password-reset/'.$token);
-        } else {
-            return response()->json(['valid' => false]);
-        }
+public function redirectPasswordReset($token){
+    \Illuminate\Support\Facades\Log::info('Received token: ' . $token);
+
+    if (Cache::get('password-reset-token:' . $token)) {
+        \Illuminate\Support\Facades\Log::info('Token found in cache. Removing...');
+        Cache::forget('password-reset-token:' . $token);
+        return Redirect::to('http://localhost:3000/password-reset/'.$token);
+    } else {
+        \Illuminate\Support\Facades\Log::info('Token not found in cache. Invalid token.');
+        return response()->json(['valid' => false]);
     }
+}
+public function resetPassword(Request $request){
+    $request->validate([
+        "password"=> "required|max:20|min:9",
+        "confirm_password"=>"required|max:20|min:9",
+    ]);
+    if($request->input("password") == $request->input("confirm_password")){
+        $newPassword = Hash::make($request->input("password"));
+        if(User::find(Session::get("user_id"))->update(["password"=>$newPassword])){
+            return response()->json(
+                [
+                    "message" => "Password changed successfully",
+                    "status"=>200,
+                ]
+            );
+        }else{
+            return response()->json(
+                [
+                    "message" => "Something went wrong!",
+                    "status"=>300
+                ]
+            );
+        }
+    }else{
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'confirm_password' => "Password doesn't match",
+            ]);
+    }
+
+}
 
     /**
      * Store a newly created resource in storage.

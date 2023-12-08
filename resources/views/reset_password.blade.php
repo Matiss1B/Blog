@@ -49,7 +49,7 @@
 
 <p>
     Best regards,<br>
-    Your Application Name
+    BlogIt team
 </p>
 </body>
 </html>

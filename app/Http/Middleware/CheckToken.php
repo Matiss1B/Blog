@@ -24,7 +24,7 @@ class CheckToken
             $token = Tokens::where("token", $request->header('Authorization'))->first();
             $timestamp = Carbon::parse($token->updated_at);
             $currentTimestamp = Carbon::now();
-            if ($currentTimestamp->diffInMinutes($timestamp) >= 20) {
+            if ($currentTimestamp->diffInMinutes($timestamp) >= 30) {
                 Session::flush();
                 Tokens::where("token",$request->header('Authorization'))->delete();
                 return response()->json(["Message"=> "Unauthorised!", "status"=>401], 401);

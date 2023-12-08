@@ -28,8 +28,9 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
     Route::post('/logout',[\App\Http\Controllers\API\V1\AuthenticationController::class, "logout"]);
     Route::get('/user/get',[\App\Http\Controllers\API\V1\AuthenticationController::class, "get"])->middleware(CheckToken::class);
     Route::put('/user/edit',[\App\Http\Controllers\API\V1\AuthenticationController::class, "edit"])->middleware(CheckToken::class);
-    Route::post('/user/pswreset', [\App\Http\Controllers\API\V1\ResetPasswordController::class, "store"])->middleware(CheckToken::class);
+    Route::post('/user/password-reset-mail', [\App\Http\Controllers\API\V1\ResetPasswordController::class, "store"])->middleware(CheckToken::class);
     Route::get('/user/password-reset/{token}', [\App\Http\Controllers\API\V1\AuthenticationController::class, "redirectPasswordReset"]);
+    Route::post('/user/password-reset', [\App\Http\Controllers\API\V1\AuthenticationController::class, "resetPassword"])->middleware(CheckToken::class);
     //Blogs
     Route::apiResource('blogs', \App\Http\Controllers\Api\V1\BlogController::class)->middleware(CheckToken::class);;
     Route::post('create', [\App\Http\Controllers\API\V1\BlogController::class, "create"])->middleware(CheckToken::class);;

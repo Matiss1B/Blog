@@ -13,7 +13,13 @@ class ResetPasswordController extends Controller
         $request->validate([
             'email' => 'required|email',
         ]);
-        $token = Str::random(32);
+        if (!filter_var($request->input("email"), FILTER_VALIDATE_EMAIL)) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'email' => 'Email is not valid',
+            ]);
+        }
+        $randomNumber = mt_rand(1000000000, 9999999999);
+        $token = substr(strval($randomNumber), 0, 10);
         Cache::put('password-reset-token:' . $token, true, 60);
         $data =
             [
@@ -23,17 +29,22 @@ class ResetPasswordController extends Controller
             ];
         $this->data = $data;
         $this->subject = request("subject");
-        $this->to = 'printmiidesign@info.com';
-        $this->from = request("email");
+        $this->to = request("email");
+        $this->from = 'blogit@info.com';
 
     }
     public function store()
     {
-        Mail::send('reset_password', $this->data, function($message)
+        if(Mail::send('reset_password', $this->data, function($message)
         {
-            $message->from("blogit@info.lv");
-            $message->to($this->from)->subject("Password reset");
-        });
+            $message->from($this->from);
+            $message->to($this->to)->subject("Password reset");
+        })){
+            return response()->json([
+                "status"=>200,
+                "message"=>"successfully sent",
+            ]);
+        }
 
     }
 }
