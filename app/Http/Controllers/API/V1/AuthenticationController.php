@@ -48,7 +48,7 @@ class AuthenticationController extends Controller
         $data = $request->input();
         $email = $data['email'];
         $password = $data['password'];
-        $name= $data['name'];
+        $name = $data['name'];
         $surname = $data["surname"];
         $user = [
             "email"=>$email,

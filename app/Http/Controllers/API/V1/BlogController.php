@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1;
 use App\Filters\V1\BlogFilter;
 use App\Functions\ImagesFunctions;
 use App\Http\Controllers\Controller;
+use App\Models\API\V1\SavedBlogs;
 use App\Models\API\V1\Tokens;
 use App\Http\Middleware\CheckToken;
 use App\Http\Controllers\API\V1\TokenController;
@@ -23,9 +24,6 @@ class BlogController extends Controller
     public function __construct(){
         $this->imagesFunctions = new ImagesFunctions();
     }
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
 
@@ -36,7 +34,7 @@ class BlogController extends Controller
         if($blogs->isEmpty()){
             return response()->json(
                 [
-                    "statuss"=>200,
+                    "status"=>200,
                     "message"=>"Could not find any blogs, please check given params",
                 ]
             );
@@ -80,31 +78,35 @@ class BlogController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(StoreBlogRequest $request)
-    {
-        //
+//    public function save(Request $request)
+//    {
+//        $data = [
+//            "user_id"=> Session::get("user_id"),
+//            "blog_id"=> request("blog_id"),
+//        ];
+//        if(SavedBlogs::create($data)){
+//            return response()->json([
+//                "message"=>"Saved successfully!",
+//                "status"=>200,
+//            ]);
+//        }
+//        return response()->json([
+//            "message"=>"Error",
+//            "status"=>300,
+//        ]);
+//    }
+    public function getSaved(Request $request){
+        $userId = 2;
+
+        $blogs = Blog::with(['savedBlogsForCurrentUser' => function ($query) use ($userId) {
+            $query->where('user_id', $userId);
+        }])
+            ->find(1);
+
+        return $blogs;
     }
 
 
-    /**
-     * Display the specified resource.
-     */
-    public function show(Blog $blog)
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(Blog $blog)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request)
     {
         $updatedData = [

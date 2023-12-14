@@ -35,10 +35,14 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
     Route::apiResource('blogs', \App\Http\Controllers\Api\V1\BlogController::class)->middleware(CheckToken::class);;
     Route::post('create', [\App\Http\Controllers\API\V1\BlogController::class, "create"])->middleware(CheckToken::class);;
     Route::post("/edit",[\App\Http\Controllers\API\V1\BlogController::class, 'update'])->middleware(CheckToken::class);
+    Route::post('blog/save',[\App\Http\Controllers\API\V1\BlogController::class, 'save']);
+    Route::get('blog/get/saved',[\App\Http\Controllers\API\V1\BlogController::class, 'getSaved']);
     //Comments
     Route::apiResource('comments', \App\Http\Controllers\Api\V1\CommentsController::class)->middleware(CheckToken::class);
     Route::post('/comment/create', [\App\Http\Controllers\API\V1\CommentsController::class, "create"])->middleware(CheckToken::class);
     Route::delete('/comment/delete/{comment}',[\App\Http\Controllers\API\V1\CommentsController::class, "destroy"])->middleware(CheckToken::class);
+    //Categories
+    Route::get("/categories/get",[\App\Http\Controllers\API\V1\CategoriesController::class, "get"])->middleware(CheckToken::class);
 
 
 });
