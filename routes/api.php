@@ -35,8 +35,10 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
     Route::apiResource('blogs', \App\Http\Controllers\Api\V1\BlogController::class)->middleware(CheckToken::class);;
     Route::post('create', [\App\Http\Controllers\API\V1\BlogController::class, "create"])->middleware(CheckToken::class);;
     Route::post("/edit",[\App\Http\Controllers\API\V1\BlogController::class, 'update'])->middleware(CheckToken::class);
-    Route::post('blog/save',[\App\Http\Controllers\API\V1\BlogController::class, 'save']);
-    Route::get('blog/get/saved',[\App\Http\Controllers\API\V1\BlogController::class, 'getSaved']);
+    Route::post('blog/save',[\App\Http\Controllers\API\V1\BlogController::class, 'save'])->middleware(CheckToken::class);
+    Route::get('blog/get/{id}',[\App\Http\Controllers\API\V1\BlogController::class, 'getSaved'])->middleware(CheckToken::class);
+    Route::post('blog/file/test', [\App\Http\Controllers\API\V1\BlogController::class, 'test']);
+    Route::get('blog/get/all/saved', [\App\Http\Controllers\API\V1\BlogController::class, 'getAllSaved'])->middleware(CheckToken::class);
     //Comments
     Route::apiResource('comments', \App\Http\Controllers\Api\V1\CommentsController::class)->middleware(CheckToken::class);
     Route::post('/comment/create', [\App\Http\Controllers\API\V1\CommentsController::class, "create"])->middleware(CheckToken::class);

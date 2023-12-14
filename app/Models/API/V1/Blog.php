@@ -21,10 +21,6 @@ class Blog extends Model
     public function user() {
         return $this->belongsTo(User::class, "user_id", "id")->select(['id', 'name', 'img']);
     }
-//    public function saved() {
-//        return $this->belongsTo(User::class, "id", "blog_id");
-//    }
-
     public function savedBlogsForCurrentUser() {
         return $this->hasMany(SavedBlogs::class, 'blog_id')
             ->where('user_id', 1);

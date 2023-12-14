@@ -6,6 +6,7 @@ use App\Filters\V1\BlogFilter;
 use App\Functions\ImagesFunctions;
 use App\Http\Controllers\Controller;
 use App\Models\API\V1\SavedBlogs;
+use PhpOffice\PhpWord\IOFactory;
 use App\Models\API\V1\Tokens;
 use App\Http\Middleware\CheckToken;
 use App\Http\Controllers\API\V1\TokenController;
@@ -78,34 +79,94 @@ class BlogController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-//    public function save(Request $request)
-//    {
-//        $data = [
-//            "user_id"=> Session::get("user_id"),
-//            "blog_id"=> request("blog_id"),
-//        ];
-//        if(SavedBlogs::create($data)){
-//            return response()->json([
-//                "message"=>"Saved successfully!",
-//                "status"=>200,
-//            ]);
-//        }
-//        return response()->json([
-//            "message"=>"Error",
-//            "status"=>300,
-//        ]);
-//    }
-    public function getSaved(Request $request){
-        $userId = 2;
+    public function save(Request $request)
+    {
+        $data = [
+            "user_id"=> Session::get("user_id"),
+            "blog_id"=> request("blog_id"),
+        ];
+        $record = SavedBlogs::where('user_id', $data['user_id'])
+            ->where('blog_id', $data['blog_id'])
+            ->first();
+
+        if ($record) {
+            if($record->delete()){
+                return response()->json([
+                    "message"=>"Saved successfully!",
+                    "status"=>200,
+                ]);
+            }
+            return response()->json([
+                "message"=>"Error",
+                "status"=>300,
+            ]);
+        }
+        if(SavedBlogs::create($data)){
+            return response()->json([
+                "message"=>"Saved successfully!",
+                "status"=>200,
+            ]);
+        }
+        return response()->json([
+            "message"=>"Error",
+            "status"=>300,
+        ]);
+    }
+    public function getSaved(Request $request, $id){
+        $userId = Session::get("user_id");
 
         $blogs = Blog::with(['savedBlogsForCurrentUser' => function ($query) use ($userId) {
             $query->where('user_id', $userId);
-        }])
-            ->find(1);
+        }])->with("user")
+            ->find($id);
 
-        return $blogs;
+        return response()->json([
+            "data"=> $blogs,
+            "status"=> 200,
+        ]);
+    }
+    public function getAllSaved(Request $request){
+        $saved = SavedBlogs::where("user_id",'=', Session::get("user_id"))
+            ->get()
+            ->pluck("blog_id");
+        if($saved){
+            $blogs = Blog::whereIn('id', $saved)
+                ->with("user")
+                ->get();
+            return $blogs;
+        }
     }
 
+    public function test(Request $request)
+    {
+        $request->validate([
+            'file' => 'required|mimes:txt,docx|max:10240', // Adjust max file size as needed
+        ]);
+
+        // Get the content of the uploaded file
+        $file = $request->file('file');
+        $content = $this->readDocxFile($file);
+
+        // You can now use $content as needed, e.g., display it or process it
+        return response()->json(['content' => $content]);
+    }
+    private function readDocxFile($file)
+    {
+        $phpWord = IOFactory::load($file->getPathname());
+
+        // Debugging: Dump sections
+        dd($phpWord->getSections());
+
+        // Extract the text content from the Word document
+        $content = '';
+        foreach ($phpWord->getSections() as $section) {
+            foreach ($section->getElements() as $element) {
+                $content .= $element->getText() . ' ';
+            }
+        }
+
+        return $content;
+    }
 
     public function update(Request $request)
     {
