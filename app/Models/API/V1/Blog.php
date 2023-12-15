@@ -25,4 +25,7 @@ class Blog extends Model
         return $this->hasMany(SavedBlogs::class, 'blog_id')
             ->where('user_id', 1);
     }
+    public function saves(){
+        return $this->hasMany(SavedBlogs::class, 'blog_id');
+    }
 }

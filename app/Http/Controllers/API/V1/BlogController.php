@@ -118,6 +118,7 @@ class BlogController extends Controller
         $blogs = Blog::with(['savedBlogsForCurrentUser' => function ($query) use ($userId) {
             $query->where('user_id', $userId);
         }])->with("user")
+            ->with("saves")
             ->find($id);
 
         return response()->json([

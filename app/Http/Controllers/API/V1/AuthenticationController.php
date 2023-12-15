@@ -172,9 +172,9 @@ public function resetPassword(Request $request){
     public function edit(Request $request){
          $request->validate([
             "email"=> "max:20|min:5",
-            "name"=> "max:20|min:5",
+            "name"=> "max:20|min:2",
             "password"=> "max:20|min:9",
-            "surname"=>"max:20|min:5"
+            "surname"=>"max:20|min:2"
         ]);
          $user = User::where("id", Session::get("user_id"))->first();
         $data = new RequestFilter(["email", "name", "password", "surname", "img"]);
