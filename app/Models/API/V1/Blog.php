@@ -28,4 +28,7 @@ class Blog extends Model
     public function saves(){
         return $this->hasMany(SavedBlogs::class, 'blog_id');
     }
+    public function comments(){
+        return $this->hasMany(Comments::class, 'blog_id')->with('user');
+    }
 }

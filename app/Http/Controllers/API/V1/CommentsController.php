@@ -34,17 +34,17 @@ class CommentsController extends Controller
     public function create(Request $request)
     {
         $request->validate([
-            "comment"=> "required|max:1000|min:4",
+            "comment"=> "required|max:1000",
         ]);
         $data =[
             "comment"=>$request->input("comment"),
-            "blog_id"=>$request->input("blog"),
+            "blog_id"=>$request->input("blog_id"),
             "user_id"=>Session::get('user_id'),
         ];
         if(Comments::create($data)){
-            return response()->json(["message"=>"Comment created!"], 200);
+            return response()->json(["message"=>"Comment created!",  "comment"=> Comments::latest()->with("user")->first(), "status" => 200], 200);
         }
-        return response()->json(["message"=>"Something went wrong!"], 300);
+        return response()->json(["message"=>"Something went wrong!", "status"=>300], 300);
 
 
     }

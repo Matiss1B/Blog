@@ -119,6 +119,7 @@ class BlogController extends Controller
             $query->where('user_id', $userId);
         }])->with("user")
             ->with("saves")
+            ->with("comments")
             ->find($id);
 
         return response()->json([
