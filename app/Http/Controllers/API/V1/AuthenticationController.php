@@ -54,6 +54,7 @@ class AuthenticationController extends Controller
             "email"=>$email,
             "password"=>$password,
             "name"=> $name,
+            "img"=> "images/DefaultProfileImage.jpeg",
             "surname"=> $surname,
         ];
         //Take user
@@ -78,6 +79,7 @@ class AuthenticationController extends Controller
         return User::create([
             'name'=>$data["name"],
             'email'=> $data['email'],
+            'img'=>"images/DefaultProfileImage.jpg",
             'password'=> Hash::make($data['password']),
             'surname'=> $data["surname"],
         ]);
@@ -184,14 +186,14 @@ public function resetPassword(Request $request){
         }
         if (isset($data["img"])){
             $data["img"] = $this->imagesFunctions->compress($data["img"], 15);
-            if(!empty($user->img)) {
+            if(!empty($user->img) && $user->img !== "images/DefaultProfileImage.jpg" ) {
                 unlink(storage_path('app/public/' . $user->img));
             }
         }
        if(User::where("id", Session::get("user_id"))->update($data)){
            return response()->json(
                [
-                   "statuss"=>200,
+                   "status"=>200,
                    "message"=>"Profile updated successfully!"
                ]
            );
