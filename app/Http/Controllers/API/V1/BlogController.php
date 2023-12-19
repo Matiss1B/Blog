@@ -5,6 +5,7 @@ namespace App\Http\Controllers\API\V1;
 use App\Filters\V1\BlogFilter;
 use App\Functions\ImagesFunctions;
 use App\Http\Controllers\Controller;
+use App\Models\API\V1\Comments;
 use App\Models\API\V1\SavedBlogs;
 use PhpOffice\PhpWord\IOFactory;
 use App\Models\API\V1\Tokens;
@@ -204,8 +205,28 @@ class BlogController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Blog $blog)
+    public function destroy($id)
     {
-        //
+        $blog = Blog::find($id);
+
+        if ($blog) {
+            Comments::where("blog_id", "=", $id)->delete();
+            SavedBlogs::where("blog_id", "=", $id)->delete();
+            $imagePath = storage_path('app/public/' . $blog->img);
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+            $blog->delete();
+            return response()->json([
+                "message"=>"Blog deleted successfully!",
+                "status"=>200,
+            ]);
+        }
+
+        return response()->json([
+            "message"=>"Something went wrong!",
+            "status"=>300,
+        ]);
     }
+
 }

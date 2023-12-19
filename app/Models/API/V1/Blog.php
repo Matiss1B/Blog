@@ -29,6 +29,6 @@ class Blog extends Model
         return $this->hasMany(SavedBlogs::class, 'blog_id');
     }
     public function comments(){
-        return $this->hasMany(Comments::class, 'blog_id')->with('user');
+        return $this->hasMany(Comments::class, 'blog_id')->with('user')->latest('created_at');
     }
 }

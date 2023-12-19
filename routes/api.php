@@ -39,6 +39,7 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
     Route::get('blog/get/{id}',[\App\Http\Controllers\API\V1\BlogController::class, 'getSaved'])->middleware(CheckToken::class);
     Route::post('blog/file/test', [\App\Http\Controllers\API\V1\BlogController::class, 'test']);
     Route::get('blog/get/all/saved', [\App\Http\Controllers\API\V1\BlogController::class, 'getAllSaved'])->middleware(CheckToken::class);
+    Route::get('blog/delete/{id}',[\App\Http\Controllers\API\V1\BlogController::class, 'destroy'])->middleware(CheckToken::class);
     //Comments
     Route::apiResource('comments', \App\Http\Controllers\Api\V1\CommentsController::class)->middleware(CheckToken::class);
     Route::post('/comment/create', [\App\Http\Controllers\API\V1\CommentsController::class, "create"])->middleware(CheckToken::class);
