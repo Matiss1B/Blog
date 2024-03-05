@@ -11,7 +11,7 @@ class ResetPasswordController extends Controller
 {
     public function __construct(Request $request){
         $request->validate([
-            'email' => 'required|email',
+            'email' => 'required|email|min:5|max:20',
         ]);
         if (!filter_var($request->input("email"), FILTER_VALIDATE_EMAIL)) {
             throw \Illuminate\Validation\ValidationException::withMessages([

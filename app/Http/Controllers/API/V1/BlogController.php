@@ -54,8 +54,8 @@ class BlogController extends Controller
                 "title"=> "required|max:50|min:4",
                 "description"=> "required|max:4000|min:4",
                 "category"=> "required|max:20|min:4",
-                "phone"=> "max:13",
-                "email"=> "max:20",
+                "phone"=> "min:8|max:13",
+                "email"=> "min:5|max:20",
                 "img"=> "required"
             ]);
             $img = $request->file("img");

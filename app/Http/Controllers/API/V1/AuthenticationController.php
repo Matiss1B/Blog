@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Redirect;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
 use App\Filters\RequestFilter;
-use App\Http\Resources\V1\UsersCollection;
+use App\Http\Resources\V1\UsersCllection;
 use Illuminate\Support\Facades\Auth;
 use App\Models\API\V1\Tokens;
 use App\Models\API\V1\User;
@@ -38,7 +38,7 @@ class AuthenticationController extends Controller
     public function register(Request $request){
         //Validate
         $request->validate([
-            "email"=> "required|max:20|min:5",
+            "email"=> "required|max:20|min:5|email",
             "password"=> "required|max:20|min:9",
             "surname"=>"required|max:15|min:2",
             "name"=>"required|max:15|min:2",
@@ -107,15 +107,15 @@ public function resetPassword(Request $request){
             return response()->json(
                 [
                     "message" => "Password changed successfully",
-                    "status"=>200,
-                ]
+                    "status"=>201,
+                ],201
             );
         }else{
             return response()->json(
                 [
                     "message" => "Something went wrong!",
                     "status"=>300
-                ]
+                ],300
             );
         }
     }else{
@@ -126,13 +126,14 @@ public function resetPassword(Request $request){
 
 }
 
+
     /**
      * Store a newly created resource in storage.
      */
     public function login(Request $request)
     {
         $request->validate([
-            "email"=> "required|max:20|min:5",
+            "email"=> "required|max:20|min:5|email",
             "password"=> "required|max:20|min:5",
         ]);
         $newToken = Str::random(60);
@@ -152,7 +153,7 @@ public function resetPassword(Request $request){
             return response()->json(["success"=>"OK", "link"=>"home", "user"=>$newToken],200 );
         }else{
             $errors = [
-                "invalid" =>'Username or Passeord is incorrect'
+                "invalid" =>'Username or password is incorrect'
             ];
             return response()->json(["success"=>"ERR", 'errors'=>$errors], 422);
         }
@@ -173,10 +174,10 @@ public function resetPassword(Request $request){
     }
     public function edit(Request $request){
          $request->validate([
-            "email"=> "max:20|min:5",
-            "name"=> "max:20|min:2",
+            "email"=> "max:20|min:5|email",
+            "name"=> "max:15|min:2",
             "password"=> "max:20|min:9",
-            "surname"=>"max:20|min:2"
+            "surname"=>"max:15|min:2"
         ]);
          $user = User::where("id", Session::get("user_id"))->first();
         $data = new RequestFilter(["email", "name", "password", "surname", "img"]);

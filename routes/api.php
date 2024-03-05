@@ -32,9 +32,9 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
     Route::get('/user/password-reset/{token}', [\App\Http\Controllers\API\V1\AuthenticationController::class, "redirectPasswordReset"]);
     Route::post('/user/password-reset', [\App\Http\Controllers\API\V1\AuthenticationController::class, "resetPassword"])->middleware(CheckToken::class);
     //Blogs
-    Route::apiResource('blogs', \App\Http\Controllers\Api\V1\BlogController::class)->middleware(CheckToken::class);;
-    Route::post('create', [\App\Http\Controllers\API\V1\BlogController::class, "create"])->middleware(CheckToken::class);;
-    Route::post("/edit",[\App\Http\Controllers\API\V1\BlogController::class, 'update'])->middleware(CheckToken::class);
+    Route::apiResource('blogs', \App\Http\Controllers\Api\V1\BlogController::class)->middleware(CheckToken::class);
+    Route::post('create', [\App\Http\Controllers\API\V1\BlogController::class, "create"])->middleware(CheckToken::class);
+    Route::post("blog/edit",[\App\Http\Controllers\API\V1\BlogController::class, 'update'])->middleware(CheckToken::class);
     Route::post('blog/save',[\App\Http\Controllers\API\V1\BlogController::class, 'save'])->middleware(CheckToken::class);
     Route::get('blog/get/{id}',[\App\Http\Controllers\API\V1\BlogController::class, 'getSaved'])->middleware(CheckToken::class);
     Route::post('blog/file/test', [\App\Http\Controllers\API\V1\BlogController::class, 'test']);
