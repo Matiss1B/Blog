@@ -19,9 +19,9 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:3000'],
+    'allowed_origins' => ['http://localhost:3000', 'https://into.id.lv'],
 
-    'allowed_origins_patterns' => ['http://localhost:3000'],
+    'allowed_origins_patterns' => ['http://localhost:3000', 'https://into.id.lv'],
 
     'allowed_headers' => ['*'],
 

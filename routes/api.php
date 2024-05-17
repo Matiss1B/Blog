@@ -21,6 +21,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], function () {
     //Token
     Route::post('/checkToken',[\App\Http\Controllers\API\V1\TokenController::class, "check"]);
+    Route::get('/online',[\App\Http\Controllers\API\V1\TokenController::class, "getOnline"])->middleware(CheckToken::class);
     //Authentification
     Route::apiResource('users', \App\Http\Controllers\Api\V1\AuthenticationController::class)->middleware(CheckToken::class);
     Route::post('/register',[\App\Http\Controllers\API\V1\AuthenticationController::class, "register"]);
@@ -34,6 +35,7 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
     //Blogs
     Route::apiResource('blogs', \App\Http\Controllers\Api\V1\BlogController::class)->middleware(CheckToken::class);
     Route::post('create', [\App\Http\Controllers\API\V1\BlogController::class, "create"])->middleware(CheckToken::class);
+    Route::get('blog/for',[\App\Http\Controllers\API\V1\BlogController::class, 'getForYou'])->middleware(CheckToken::class);
     Route::post("blog/edit",[\App\Http\Controllers\API\V1\BlogController::class, 'update'])->middleware(CheckToken::class);
     Route::post('blog/save',[\App\Http\Controllers\API\V1\BlogController::class, 'save'])->middleware(CheckToken::class);
     Route::get('blog/get/{id}',[\App\Http\Controllers\API\V1\BlogController::class, 'getSaved'])->middleware(CheckToken::class);
@@ -46,6 +48,8 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
     Route::delete('/comment/delete/{comment}',[\App\Http\Controllers\API\V1\CommentsController::class, "destroy"])->middleware(CheckToken::class);
     //Categories
     Route::get("/categories/get",[\App\Http\Controllers\API\V1\CategoriesController::class, "get"])->middleware(CheckToken::class);
+    //HashTags
+    Route::post('/tags/add', [\App\Http\Controllers\API\V1\HashtagsController::class, "addUserTags"])->middleware(CheckToken::class);
 
 
 });

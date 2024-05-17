@@ -11,7 +11,7 @@ class ResetPasswordController extends Controller
 {
     public function __construct(Request $request){
         $request->validate([
-            'email' => 'required|email|min:5|max:20',
+            'email' => 'required|email|min:5|max:40',
         ]);
         if (!filter_var($request->input("email"), FILTER_VALIDATE_EMAIL)) {
             throw \Illuminate\Validation\ValidationException::withMessages([
@@ -35,16 +35,27 @@ class ResetPasswordController extends Controller
     }
     public function store()
     {
-        if(Mail::send('reset_password', $this->data, function($message)
-        {
-            $message->from($this->from);
-            $message->to($this->to)->subject("Password reset");
-        })){
-            return response()->json([
-                "status"=>200,
-                "message"=>"successfully sent",
-            ]);
-        }
+        try {
+            Mail::send('reset_password', $this->data, function ($message) {
+                $message->from($this->from);
+                $message->to($this->to)->subject("Password reset");
+            });
 
-    }
-}
+            if (Mail::failures()) {
+                return response()->json([
+                    "status" => 500,
+                    "message" => "Error sending email. Failed to deliver to recipient.",
+                ], 500);
+            }
+
+            return response()->json([
+                "status" => 200,
+                "message" => "Email successfully sent",
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                "status" => 500,
+                "message" => "Error sending email: " . $e->getMessage(),
+            ], 500);
+        }
+    }}

@@ -5,8 +5,12 @@ namespace App\Http\Controllers\API\V1;
 use App\Filters\V1\BlogFilter;
 use App\Functions\ImagesFunctions;
 use App\Http\Controllers\Controller;
+use App\Models\API\V1\BlogTag;
 use App\Models\API\V1\Comments;
 use App\Models\API\V1\SavedBlogs;
+use App\Models\API\V1\Tag;
+use App\Models\API\V1\UserTags;
+use http\Env\Response;
 use PhpOffice\PhpWord\IOFactory;
 use App\Models\API\V1\Tokens;
 use App\Http\Middleware\CheckToken;
@@ -22,9 +26,38 @@ use Illuminate\Support\Str;
 
 class BlogController extends Controller
 {
+
     private $imagesFunctions;
     public function __construct(){
         $this->imagesFunctions = new ImagesFunctions();
+    }
+    function hasMatchingLetters($str, $array) {
+        foreach ($array as $item) {
+            if ($str === $item) {
+                return true;
+            }
+        }
+        foreach ($array as $item) {
+            $len1 = strlen($str);
+            $len2 = strlen($item);
+
+            // Iterate through the characters of the first string
+            for ($i = 0; $i <= $len1 - 3; $i++) {
+                $substring1 = substr($str, $i, 3);
+
+                // Iterate through the characters of the second string
+                for ($j = 0; $j <= $len2 - 3; $j++) {
+                    $substring2 = substr($item, $j, 3);
+
+                    // Compare the substrings for a match
+                    if ($substring1 === $substring2) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
     public function index(Request $request)
     {
@@ -41,10 +74,15 @@ class BlogController extends Controller
                 ]
             );
         }
+        foreach ($blogs as $blog){
+            $blogTags = BlogTag::query()->where("blog_id", "=", $blog->id)->pluck("tag_id");
+            $tags = Tag::query()->whereIn("id", $blogTags)->get();
+            $blog->tags = $tags;
+        }
         return $blogs;
     }
     /**
-     * Show the form for creating a new resource.
+     * Show the form for creat  ing a new resource.
      */
 
     public function create(Request $request)
@@ -54,8 +92,8 @@ class BlogController extends Controller
                 "title"=> "required|max:50|min:4",
                 "description"=> "required|max:4000|min:4",
                 "category"=> "required|max:20|min:4",
-                "phone"=> "min:8|max:13",
-                "email"=> "min:5|max:20",
+                "phone"=> "max:13",
+                "email"=> "max:20",
                 "img"=> "required"
             ]);
             $img = $request->file("img");
@@ -63,17 +101,76 @@ class BlogController extends Controller
                 "title" => $data["title"],
                 "description" => $data['description'],
                 "category" => $data['category'],
-                "email" => $data['email'],
-                "phone" => $data['phone'],
                 "author"=>Session::get("user_id"),
                 "user_id"=>Session::get("user_id"),
                 "img" => $this->imagesFunctions->compress($img, 15),
             ];
-            if(Blog::create($blog)){
+            if($request->input("email")){
+                $data["email"] = $request->input("email");
+            }
+            if($request->input("phone")){
+                $data["phone"] = $request->input("phone");
+            }
+            $create = Blog::create($blog);
+            if($create){
+                if($request->input("tags")){
+                    foreach (explode(",", $request->input("tags")) as $tag) {
+                        $exist = Tag::query()->where("tag", "=", $tag)->first();
+
+                        if (!$exist) {
+                            $newTag = Tag::query()->create([
+                                "tag" => $tag
+                            ]);
+                            $tagId = $newTag->id;
+                        } else {
+                            $tagId = $exist->id;
+                        }
+
+                        BlogTag::query()->create([
+                            "tag_id" => $tagId,
+                            "blog_id" => $create->id
+                        ]);
+                    }
+
+                }
                 return response()->json(["message"=> "Blog created successfully"], 200);
             }else{
                 return response()->json(["message"=> "Something gone wrong", "error"=>Blog::create($blog)], 300);
             }
+
+    }
+    public function getForYou()
+    {
+        //Get last user whatched tags
+        $id = Session::get("user_id");
+        $userTags = UserTags::query()
+            ->where('user_id', $id)
+            ->latest()
+            ->take(20)
+            ->get()
+            ->unique('tag')
+            ->pluck('tag')
+            ->take(10);
+        //Take also similar tags for
+        $allTags = Tag::query()->get();
+        $similarTags = [];
+        foreach ($allTags as $tag) {
+            if($this->hasMatchingLetters($tag->tag, $userTags)){
+                array_push($similarTags, $tag->id);
+            }
+        }
+        //Take unique blogs
+        $uniqueBlogIds = BlogTag::query()
+            ->whereIn('tag_id', $similarTags)
+            ->pluck('blog_id')
+            ->unique()
+            ->values();
+        $blogs = Blog::with('user')->whereIn("id", $uniqueBlogIds)
+            ->whereNot("user_id", Session::get("user_id"))
+            ->get();
+
+        return $blogs;
+
 
     }
 
@@ -122,11 +219,14 @@ class BlogController extends Controller
             ->with("saves")
             ->with("comments")
             ->find($id);
+        $blogTags = BlogTag::query()->where("blog_id", "=", $blogs->id)->pluck("tag_id");
+        $tags = Tag::query()->whereIn("id", $blogTags)->get();
 
         return response()->json([
             "data"=> $blogs,
-            "status"=> 200,
-        ]);
+            "tags"=>$tags,
+            "status"=> 201,
+        ], 201);
     }
     public function getAllSaved(Request $request){
         $saved = SavedBlogs::where("user_id",'=', Session::get("user_id"))
@@ -136,6 +236,11 @@ class BlogController extends Controller
             $blogs = Blog::whereIn('id', $saved)
                 ->with("user")
                 ->get();
+            foreach ($blogs as $blog){
+                $blogTags = BlogTag::query()->where("blog_id", "=", $blog->id)->pluck("tag_id");
+                $tags = Tag::query()->whereIn("id", $blogTags)->get();
+                $blog->tags = $tags;
+            }
             return $blogs;
         }
     }
@@ -171,8 +276,15 @@ class BlogController extends Controller
         return $content;
     }
 
-    public function update(Request $request)
+        public function update(Request $request)
     {
+        $request->validate([
+            "title"=> "required|max:50|min:4",
+            "description"=> "required|max:4000|min:4",
+            "category"=> "required|max:20|min:4",
+            "phone"=> "min:8|max:13",
+            "email"=> "min:5|max:20",
+        ]);
         $updatedData = [
             'id' => $request->input('id'),
             'title' => $request->input('title'),
@@ -182,12 +294,42 @@ class BlogController extends Controller
             $img = $request->file("img");
             $blog = Blog::findOrFail($updatedData["id"]);
             if(isset($img)) {
-                unlink(storage_path('app/public/' . $blog->img));
-                $blog->img = $this->imagesFunctions->compress($img, 15);;
+                $imagePath = storage_path('app/public/' . $blog->img);
+                unlink($imagePath);
+                $blog->img = $this->imagesFunctions->compress($img, 15);
             }
             $blog->title = $updatedData['title'];
             $blog->description = $updatedData['description'];
             $blog->category = $updatedData['category'];
+            if($request->input("tags")){
+                $blogTags = BlogTag::query()->where("blog_id", $blog->id);
+                if($blogTags->exists()) {
+                    if (!$blogTags->delete()) {
+                        return response()->json([
+                            "message" => "Failed to delete blog tags",
+                            "status" => 300
+                        ], 300);
+                    }
+                }
+                foreach (explode(",", $request->input("tags")) as $tag) {
+                    $exist = Tag::query()->where("tag", "=", $tag)->first();
+
+                    if (!$exist) {
+                        $newTag = Tag::query()->create([
+                            "tag" => $tag
+                        ]);
+                        $tagId = $newTag->id;
+                    } else {
+                        $tagId = $exist->id;
+                    }
+
+                    BlogTag::query()->create([
+                        "tag_id" => $tagId,
+                        "blog_id" => $blog->id
+                    ]);
+                }
+
+            }
 
             if ($blog->save()) {
                 return response()->json([
