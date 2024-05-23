@@ -32,8 +32,12 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
     Route::post('/user/password-reset-mail', [\App\Http\Controllers\API\V1\ResetPasswordController::class, "store"])->middleware(CheckToken::class);
     Route::get('/user/password-reset/{token}', [\App\Http\Controllers\API\V1\AuthenticationController::class, "redirectPasswordReset"]);
     Route::post('/user/password-reset', [\App\Http\Controllers\API\V1\AuthenticationController::class, "resetPassword"])->middleware(CheckToken::class);
+    Route::post('/user/account', [\App\Http\Controllers\API\V1\AuthenticationController::class, "getUserAccount"])->middleware(CheckToken::class);
+    Route::get('/user/profile', [\App\Http\Controllers\API\V1\AuthenticationController::class, "getProfile"])->middleware(CheckToken::class);
+
     //Blogs
     Route::apiResource('blogs', \App\Http\Controllers\Api\V1\BlogController::class)->middleware(CheckToken::class);
+    Route::get('blog/for/edit', [\App\Http\Controllers\API\V1\BlogController::class, "index"])->middleware(CheckToken::class)->middleware(\App\Http\Middleware\CheckAuthor::class);
     Route::post('create', [\App\Http\Controllers\API\V1\BlogController::class, "create"])->middleware(CheckToken::class);
     Route::get('blog/for',[\App\Http\Controllers\API\V1\BlogController::class, 'getForYou'])->middleware(CheckToken::class);
     Route::post("blog/edit",[\App\Http\Controllers\API\V1\BlogController::class, 'update'])->middleware(CheckToken::class);
@@ -41,6 +45,7 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
     Route::get('blog/get/{id}',[\App\Http\Controllers\API\V1\BlogController::class, 'getSaved'])->middleware(CheckToken::class);
     Route::post('blog/file/test', [\App\Http\Controllers\API\V1\BlogController::class, 'test']);
     Route::get('blog/get/all/saved', [\App\Http\Controllers\API\V1\BlogController::class, 'getAllSaved'])->middleware(CheckToken::class);
+    Route::get('blog/followers', [\App\Http\Controllers\API\V1\BlogController::class, 'getFollowers'])->middleware(CheckToken::class);
     Route::get('blog/delete/{id}',[\App\Http\Controllers\API\V1\BlogController::class, 'destroy'])->middleware(CheckToken::class);
     //Comments
     Route::apiResource('comments', \App\Http\Controllers\Api\V1\CommentsController::class)->middleware(CheckToken::class);
@@ -50,6 +55,9 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
     Route::get("/categories/get",[\App\Http\Controllers\API\V1\CategoriesController::class, "get"])->middleware(CheckToken::class);
     //HashTags
     Route::post('/tags/add', [\App\Http\Controllers\API\V1\HashtagsController::class, "addUserTags"])->middleware(CheckToken::class);
+    //Followers
+    Route::post('/follow/toggle', [\App\Http\Controllers\API\V1\FollowersController::class, "toggleFollow"])->middleware(CheckToken::class);
+    Route::post('/follow/remove', [\App\Http\Controllers\API\V1\FollowersController::class, "removeFollower"])->middleware(CheckToken::class);;
 
 
 });

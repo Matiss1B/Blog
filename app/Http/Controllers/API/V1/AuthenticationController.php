@@ -4,6 +4,8 @@ namespace App\Http\Controllers\API\V1;
 
 use App\Filters\V1\UserFilter;
 use App\Functions\ImagesFunctions;
+use App\Models\API\V1\Blog;
+use App\Models\API\V1\Followers;
 use Illuminate\Support\Facades\Redirect;
 use App\Http\Controllers\Controller;
 use Illuminate\Support\Facades\Cache;
@@ -54,7 +56,7 @@ class AuthenticationController extends Controller
             "email"=>$email,
             "password"=>$password,
             "name"=> $name,
-            "img"=> "images/DefaultProfileImage.jpeg",
+            "img"=> "images/DefaultProfileImage.jpg",
             "surname"=> $surname,
         ];
         //Take user
@@ -250,5 +252,39 @@ public function resetPassword(Request $request){
     public function get()
     {
         return User::with('blogs')->find(Session::get("user_id"));
+    }
+    public function getUserAccount(Request $request)
+    {
+        $user_id =Session::get("user_id");
+        $profile = User::with('blogs')->find(request("account_id"));
+        $followers = Followers::query()->where("account_id", request("account_id"))->with("user")->get();
+        $following = Followers::query()->where("user_id", request("account_id"))->with("account")->get();
+        $profile->followers = $followers;
+        $profile->following = $following;
+        $isFollower = $followers->contains(function ($follower) use ($user_id) {
+            return $follower->user_id == $user_id;
+        });
+
+        return response()->json([
+            "profile"=>$profile,
+            "isFollower"=>$isFollower,
+            "status" =>201,
+        ],201);
+
+    }
+    public function getProfile(Request $request)
+    {
+        $user_id =Session::get("user_id");
+        $profile = User::with('blogs')->find($user_id);
+        $followers = Followers::query()->where("account_id", $user_id)->with("user")->get();
+        $following = Followers::query()->where("user_id", $user_id)->with("account")->get();
+        $profile->followers = $followers;
+        $profile->following = $following;
+
+        return response()->json([
+            "profile"=>$profile,
+            "status" =>201,
+        ],201);
+
     }
 }

@@ -19,7 +19,7 @@ class Blog extends Model
         'img',
     ];
     public function user() {
-        return $this->belongsTo(User::class, "user_id", "id")->select(['id', 'name', 'img']);
+        return $this->belongsTo(User::class, "user_id", "id")->select(['id', 'name', 'img', 'surname']);
     }
     public function savedBlogsForCurrentUser() {
         return $this->hasMany(SavedBlogs::class, 'blog_id')

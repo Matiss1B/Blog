@@ -11,6 +11,7 @@ use App\Models\API\V1\SavedBlogs;
 use App\Models\API\V1\Tag;
 use App\Models\API\V1\UserTags;
 use http\Env\Response;
+use App\Models\API\V1\Followers;
 use PhpOffice\PhpWord\IOFactory;
 use App\Models\API\V1\Tokens;
 use App\Http\Middleware\CheckToken;
@@ -23,6 +24,7 @@ use App\Http\Resources\V1\BlogsCollection;
 use App\Models\API\V1\Blog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use function Symfony\Component\String\b;
 
 class BlogController extends Controller
 {
@@ -168,6 +170,11 @@ class BlogController extends Controller
         $blogs = Blog::with('user')->whereIn("id", $uniqueBlogIds)
             ->whereNot("user_id", Session::get("user_id"))
             ->get();
+        foreach ($blogs as $blog){
+            $blogTags = BlogTag::query()->where("blog_id", "=", $blog->id)->pluck("tag_id");
+            $tags = Tag::query()->whereIn("id", $blogTags)->get();
+            $blog->tags = $tags;
+        }
 
         return $blogs;
 
@@ -293,6 +300,13 @@ class BlogController extends Controller
         ];
             $img = $request->file("img");
             $blog = Blog::findOrFail($updatedData["id"]);
+            if($blog->user_id !== Session::get("user_id")){
+
+                return response()->json([
+                    "message" => "You are not owner",
+                    "status" => 300
+                ], 300);
+            }
             if(isset($img)) {
                 $imagePath = storage_path('app/public/' . $blog->img);
                 unlink($imagePath);
@@ -370,5 +384,20 @@ class BlogController extends Controller
             "status"=>300,
         ]);
     }
+    public function getFollowers(){
+        $userId = Session::get("user_id");
+        $followers = Followers::query()->where("user_id", $userId)->pluck("account_id")->values();
+        $blogs = Blog::query()->whereIn("user_id", $followers)->with("user")->get();
+
+        foreach ($blogs as $blog){
+            $blogTags = BlogTag::query()->where("blog_id", "=", $blog->id)->pluck("tag_id");
+            $tags = Tag::query()->whereIn("id", $blogTags)->get();
+            $blog->tags = $tags;
+        }
+
+        return $blogs;
+
+    }
+
 
 }
