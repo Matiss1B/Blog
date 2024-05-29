@@ -22,6 +22,8 @@ use Laravel\Socialite\Facades\Socialite;
 
 class AuthenticationController extends Controller
 {
+    public $patterns = ["/</", "/>/"];
+
     protected $imagesFunctions;
     public function __construct(){
         $this->imagesFunctions = new ImagesFunctions();
@@ -50,8 +52,8 @@ class AuthenticationController extends Controller
         $data = $request->input();
         $email = $data['email'];
         $password = $data['password'];
-        $name = $data['name'];
-        $surname = $data["surname"];
+        $name = preg_replace($this->patterns, " ", $data["name"]);
+        $surname = preg_replace($this->patterns, " ", $data["surname"]);
         $user = [
             "email"=>$email,
             "password"=>$password,

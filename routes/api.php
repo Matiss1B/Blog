@@ -21,6 +21,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], function () {
     //Token
     Route::post('/checkToken',[\App\Http\Controllers\API\V1\TokenController::class, "check"]);
+    Route::post('/setup',[\App\Http\Controllers\API\V1\TokenController::class, "setup"]);
     Route::get('/online',[\App\Http\Controllers\API\V1\TokenController::class, "getOnline"])->middleware(CheckToken::class);
     //Authentification
     Route::apiResource('users', \App\Http\Controllers\Api\V1\AuthenticationController::class)->middleware(CheckToken::class);

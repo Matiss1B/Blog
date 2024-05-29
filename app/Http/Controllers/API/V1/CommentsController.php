@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Session;
 
 class CommentsController extends Controller
 {
+    public $patterns = ["/</", "/>/"];
     /**
      * Display a listing of the resource.
      */
@@ -37,7 +38,7 @@ class CommentsController extends Controller
             "comment"=> "required|max:1000",
         ]);
         $data =[
-            "comment"=>$request->input("comment"),
+            "comment"=>preg_replace($this->patterns, " ", $request->input("comment")),
             "blog_id"=>$request->input("blog_id"),
             "user_id"=>Session::get('user_id'),
         ];

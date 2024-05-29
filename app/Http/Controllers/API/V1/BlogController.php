@@ -28,6 +28,7 @@ use function Symfony\Component\String\b;
 
 class BlogController extends Controller
 {
+    public $patterns = ["/</", "/>/"];
 
     private $imagesFunctions;
     public function __construct(){
@@ -100,23 +101,23 @@ class BlogController extends Controller
             ]);
             $img = $request->file("img");
             $blog = [
-                "title" => $data["title"],
-                "description" => $data['description'],
-                "category" => $data['category'],
+                "title" => preg_replace($this->patterns, " ", $data["title"]),
+                "description" => preg_replace($this->patterns, " ", $data["description"]),
+                "category" => preg_replace($this->patterns, " ", $data["category"]),
                 "author"=>Session::get("user_id"),
                 "user_id"=>Session::get("user_id"),
                 "img" => $this->imagesFunctions->compress($img, 15),
             ];
             if($request->input("email")){
-                $data["email"] = $request->input("email");
+                $data["email"] = preg_replace($this->patterns, " ", $request->input("email"));
             }
             if($request->input("phone")){
-                $data["phone"] = $request->input("phone");
+                $data["phone"] = preg_replace($this->patterns, " ", $request->input("phone"));
             }
             $create = Blog::create($blog);
             if($create){
                 if($request->input("tags")){
-                    foreach (explode(",", $request->input("tags")) as $tag) {
+                    foreach (explode(",", preg_replace($this->patterns, " ", $request->input("tags"))) as $tag) {
                         $exist = Tag::query()->where("tag", "=", $tag)->first();
 
                         if (!$exist) {
@@ -293,10 +294,10 @@ class BlogController extends Controller
             "email"=> "min:5|max:20",
         ]);
         $updatedData = [
-            'id' => $request->input('id'),
-            'title' => $request->input('title'),
-            'description' => $request->input('description'),
-            'category' => $request->input('category'),
+            'id' => preg_replace($this->patterns, " ", $request->input("id")),
+            'title' => preg_replace($this->patterns, " ", $request->input("title")),
+            'description' => preg_replace($this->patterns, " ", $request->input("description")),
+            'category' => preg_replace($this->patterns, " ", $request->input("category")),
         ];
             $img = $request->file("img");
             $blog = Blog::findOrFail($updatedData["id"]);
@@ -325,7 +326,7 @@ class BlogController extends Controller
                         ], 300);
                     }
                 }
-                foreach (explode(",", $request->input("tags")) as $tag) {
+                foreach (explode(",", preg_replace($this->patterns, " ", $request->input("tags"))) as $tag) {
                     $exist = Tag::query()->where("tag", "=", $tag)->first();
 
                     if (!$exist) {
