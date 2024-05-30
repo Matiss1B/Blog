@@ -51,9 +51,9 @@ return [
 
         'mailgun' => [
             'transport' => 'mailgun',
-            // 'client' => [
-            //     'timeout' => 5,
-            // ],
+            'domain' => env('MAILGUN_DOMAIN'),
+            'secret' => env('MAILGUN_SECRET'),
+            'endpoint' => env('MAILGUN_ENDPOINT', 'api.mailgun.net'),
         ],
 
         'postmark' => [
@@ -98,7 +98,7 @@ return [
     */
 
     'from' => [
-        'address' => env('MAIL_FROM_ADDRESS', 'hello@example.com'),
+        'address' => env('MAIL_FROM_ADDRESS', 'ip20.m.balins@vtdt.edu.lv'),
         'name' => env('MAIL_FROM_NAME', 'Example'),
     ],
 

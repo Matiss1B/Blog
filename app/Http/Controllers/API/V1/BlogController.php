@@ -10,6 +10,7 @@ use App\Models\API\V1\Comments;
 use App\Models\API\V1\SavedBlogs;
 use App\Models\API\V1\Tag;
 use App\Models\API\V1\UserTags;
+use App\Models\API\V1\Views;
 use http\Env\Response;
 use App\Models\API\V1\Followers;
 use PhpOffice\PhpWord\IOFactory;
@@ -61,6 +62,32 @@ class BlogController extends Controller
         }
 
         return false;
+    }
+    public function handleView(Request $request, $id)
+    {
+        $exists = Views::query()->where("blog_id", $id)
+            ->where("user_id", Session::get("user_id"))
+            ->exists();
+        if($exists){
+            return response()->json([
+                "message"=> "You have viewed",
+                "status" => 300
+            ], 300);
+        }
+        $create = Views::query()->create([
+            "user_id" => Session::get("user_id"),
+            "blog_id" => $id
+        ]);
+        if(!$create){
+            return response()->json([
+                "message"=> "Could not register view",
+                "status" => 300
+            ], 300);
+        }
+        return response()->json([
+            "message"=> "Could not register view",
+            "status" => 201
+        ], 201);
     }
     public function index(Request $request)
     {
@@ -168,8 +195,14 @@ class BlogController extends Controller
             ->pluck('blog_id')
             ->unique()
             ->values();
+        //Take viewed blogs and exlude
+        $views = Views::query()
+            ->where("user_id", Session::get("user_id"))
+            ->pluck("blog_id")
+            ->values();
         $blogs = Blog::with('user')->whereIn("id", $uniqueBlogIds)
             ->whereNot("user_id", Session::get("user_id"))
+            ->whereNotIn("id", $views)
             ->get();
         foreach ($blogs as $blog){
             $blogTags = BlogTag::query()->where("blog_id", "=", $blog->id)->pluck("tag_id");

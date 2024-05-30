@@ -2,6 +2,8 @@
 use Illuminate\Http\Request;
 use App\Http\Middleware\CheckToken;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Log;
 
 /*
 |--------------------------------------------------------------------------
@@ -19,6 +21,25 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 //Blogs
 Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], function () {
+
+    Route::get('/test-email', function () {
+        try {
+            Mail::raw('This is a test email', function ($message) {
+                $message->from('matissbalins1@gmail.com', 'Name');
+                $message->to('ip20.m.balins@vtdt.edu.lv')->subject('Test Email');
+            });
+
+            if (Mail::failures()) {
+                Log::error('Mail failures: ', Mail::failures());
+                return 'Failed to send email';
+            }
+
+            return 'Email sent successfully';
+        } catch (\Exception $e) {
+            Log::error('Error sending email: ' . $e->getMessage());
+            return 'Error sending email: ' . $e->getMessage();
+        }
+    });
     //Token
     Route::post('/checkToken',[\App\Http\Controllers\API\V1\TokenController::class, "check"]);
     Route::post('/setup',[\App\Http\Controllers\API\V1\TokenController::class, "setup"]);
@@ -30,7 +51,7 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
     Route::post('/logout',[\App\Http\Controllers\API\V1\AuthenticationController::class, "logout"]);
     Route::get('/user/get',[\App\Http\Controllers\API\V1\AuthenticationController::class, "get"])->middleware(CheckToken::class);
     Route::put('/user/edit',[\App\Http\Controllers\API\V1\AuthenticationController::class, "edit"])->middleware(CheckToken::class);
-    Route::post('/user/password-reset-mail', [\App\Http\Controllers\API\V1\ResetPasswordController::class, "store"])->middleware(CheckToken::class);
+    Route::post('/user/password-reset-mail', [\App\Http\Controllers\API\V1\ResetPasswordController::class, "sendResetLinkEmail"])->middleware(CheckToken::class);
     Route::get('/user/password-reset/{token}', [\App\Http\Controllers\API\V1\AuthenticationController::class, "redirectPasswordReset"]);
     Route::post('/user/password-reset', [\App\Http\Controllers\API\V1\AuthenticationController::class, "resetPassword"])->middleware(CheckToken::class);
     Route::post('/user/account', [\App\Http\Controllers\API\V1\AuthenticationController::class, "getUserAccount"])->middleware(CheckToken::class);
@@ -38,6 +59,7 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
 
     //Blogs
     Route::apiResource('blogs', \App\Http\Controllers\Api\V1\BlogController::class)->middleware(CheckToken::class);
+    Route::get('blog/view/{id}', [\App\Http\Controllers\API\V1\BlogController::class, "handleView"])->middleware(CheckToken::class);
     Route::get('blog/for/edit', [\App\Http\Controllers\API\V1\BlogController::class, "index"])->middleware(CheckToken::class)->middleware(\App\Http\Middleware\CheckAuthor::class);
     Route::post('create', [\App\Http\Controllers\API\V1\BlogController::class, "create"])->middleware(CheckToken::class);
     Route::get('blog/for',[\App\Http\Controllers\API\V1\BlogController::class, 'getForYou'])->middleware(CheckToken::class);
