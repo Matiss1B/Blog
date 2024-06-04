@@ -136,17 +136,23 @@ public function resetPassword(Request $request){
      */
     public function login(Request $request)
     {
+        //Tiek veikta validācija, kas pārbauda ievadlaukos ievadīto informāciju
+        //Ja informācija ir kļudaina, tiek atgriezti kļūdu ziņojumi
         $request->validate([
             "email"=> "required|max:20|min:5|email",
             "password"=> "required|max:20|min:5",
         ]);
+        //Tiek izveidots unikāls rakstzīnju savārstījums jeb žetons
         $newToken = Str::random(60);
         $credentials = $request->only("email", "password");
         $userCheck = User::where('email', $request->only('email'))->first();
+        //Tiek veikta pārbaude vai lietotājs ir autorizēts
         if(Auth::attempt($credentials)) {
+            //Tiek atjaunota lietotāja informācija
             $userCheck->update([
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
+            //Tiek ievietots datubāzē iepriekš izveidotais žetons
             $token = [
                 "user_id"=> Auth::id(),
                 "token"=>$newToken,
@@ -154,8 +160,11 @@ public function resetPassword(Request $request){
                 "updated_at"=>date('Y-m-d H:i:s'),
             ];
             Tokens::create($token);
+            //Tiek atgriezti dati, veiksmīgas pieslēgšanās gadījumā
+            //Tiek atgriezts arī žetons, ko prikšgalsistēmā saglabā, tas strādā kā atslēga datu apmaiņai
             return response()->json(["success"=>"OK", "link"=>"home", "user"=>$newToken],200 );
         }else{
+            //Ja pieslēgšanās notikusi neveiksmīgi, tiek atgriezts kļudu ziņojums
             $errors = [
                 "invalid" =>'Username or password is incorrect'
             ];

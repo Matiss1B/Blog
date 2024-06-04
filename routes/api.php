@@ -29,11 +29,6 @@ Route::group(['prefix'=> 'v1', 'namespace'=>'App\Http\Controllers\Api\V1'], func
                 $message->to('ip20.m.balins@vtdt.edu.lv')->subject('Test Email');
             });
 
-            if (Mail::failures()) {
-                Log::error('Mail failures: ', Mail::failures());
-                return 'Failed to send email';
-            }
-
             return 'Email sent successfully';
         } catch (\Exception $e) {
             Log::error('Error sending email: ' . $e->getMessage());

@@ -37,7 +37,7 @@ class ResetPasswordController extends Controller
         ];
 
         // Send the reset password email
-        return $this->sendEmail($data, "Email reset", $request->input("email"));
+        return $this->sendEmail($data, "Password reset", $request->input("email"));
     }
 
     protected function sendEmail(array $data, string $subject, string $to)
