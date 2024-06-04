@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('img');
             $table->string('category');
             $table->integer('author');
+            $table->integer('user_id');
             $table->string('phone')->nullable();
             $table->string('email')->nullable();
             $table->timestamps();

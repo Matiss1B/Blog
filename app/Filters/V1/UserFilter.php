@@ -9,10 +9,5 @@ class UserFilter extends ApiFilter{
         'name'=> ['eq'],
         'email'=> ['eq'],
     ];
-    protected $columnMap = [
-        'id'=> ['eq'],
-        'name'=> ['eq'],
-        'email'=> ['eq'],
-    ];
 }
 

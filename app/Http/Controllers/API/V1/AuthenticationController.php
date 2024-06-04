@@ -3,18 +3,32 @@
 namespace App\Http\Controllers\API\V1;
 
 use App\Filters\V1\UserFilter;
+use App\Functions\ImagesFunctions;
+use App\Models\API\V1\Blog;
+use App\Models\API\V1\Followers;
+use Illuminate\Support\Facades\Redirect;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\V1\UsersCollection;
+use Illuminate\Support\Facades\Cache;
+use App\Filters\RequestFilter;
+use App\Http\Resources\V1\UsersCllection;
 use Illuminate\Support\Facades\Auth;
 use App\Models\API\V1\Tokens;
 use App\Models\API\V1\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Str;
 use Laravel\Socialite\Facades\Socialite;
 
 class AuthenticationController extends Controller
 {
+    public $patterns = ["/</", "/>/"];
+
+    protected $imagesFunctions;
+    public function __construct(){
+        $this->imagesFunctions = new ImagesFunctions();
+    }
+
     /**
      * Display a listing of the resource.
      */
@@ -28,7 +42,7 @@ class AuthenticationController extends Controller
     public function register(Request $request){
         //Validate
         $request->validate([
-            "email"=> "required|max:20|min:5",
+            "email"=> "required|max:20|min:5|email",
             "password"=> "required|max:20|min:9",
             "surname"=>"required|max:15|min:2",
             "name"=>"required|max:15|min:2",
@@ -38,12 +52,13 @@ class AuthenticationController extends Controller
         $data = $request->input();
         $email = $data['email'];
         $password = $data['password'];
-        $name= $data['name'];
-        $surname = $data["surname"];
+        $name = preg_replace($this->patterns, " ", $data["name"]);
+        $surname = preg_replace($this->patterns, " ", $data["surname"]);
         $user = [
             "email"=>$email,
             "password"=>$password,
             "name"=> $name,
+            "img"=> "images/DefaultProfileImage.jpg",
             "surname"=> $surname,
         ];
         //Take user
@@ -68,36 +83,90 @@ class AuthenticationController extends Controller
         return User::create([
             'name'=>$data["name"],
             'email'=> $data['email'],
+            'img'=>"images/DefaultProfileImage.jpg",
             'password'=> Hash::make($data['password']),
             'surname'=> $data["surname"],
         ]);
     }
+public function redirectPasswordReset($token){
+    \Illuminate\Support\Facades\Log::info('Received token: ' . $token);
+
+    if (Cache::get('password-reset-token:' . $token)) {
+        \Illuminate\Support\Facades\Log::info('Token found in cache. Removing...');
+        Cache::forget('password-reset-token:' . $token);
+        return Redirect::to('http://localhost:3000/password-reset/'.$token);
+    } else {
+        \Illuminate\Support\Facades\Log::info('Token not found in cache. Invalid token.');
+        return response()->json(['valid' => false]);
+    }
+}
+public function resetPassword(Request $request){
+    $request->validate([
+        "password"=> "required|max:20|min:9",
+        "confirm_password"=>"required|max:20|min:9",
+    ]);
+    if($request->input("password") == $request->input("confirm_password")){
+        $newPassword = Hash::make($request->input("password"));
+        if(User::find(Session::get("user_id"))->update(["password"=>$newPassword])){
+            return response()->json(
+                [
+                    "message" => "Password changed successfully",
+                    "status"=>201,
+                ],201
+            );
+        }else{
+            return response()->json(
+                [
+                    "message" => "Something went wrong!",
+                    "status"=>300
+                ],300
+            );
+        }
+    }else{
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'confirm_password' => "Password doesn't match",
+            ]);
+    }
+
+}
+
 
     /**
      * Store a newly created resource in storage.
      */
     public function login(Request $request)
     {
+        //Tiek veikta validācija, kas pārbauda ievadlaukos ievadīto informāciju
+        //Ja informācija ir kļudaina, tiek atgriezti kļūdu ziņojumi
         $request->validate([
-            "email"=> "required|max:20|min:5",
+            "email"=> "required|max:20|min:5|email",
             "password"=> "required|max:20|min:5",
         ]);
+        //Tiek izveidots unikāls rakstzīnju savārstījums jeb žetons
         $newToken = Str::random(60);
         $credentials = $request->only("email", "password");
         $userCheck = User::where('email', $request->only('email'))->first();
+        //Tiek veikta pārbaude vai lietotājs ir autorizēts
         if(Auth::attempt($credentials)) {
+            //Tiek atjaunota lietotāja informācija
             $userCheck->update([
                 'updated_at' => date('Y-m-d H:i:s'),
             ]);
+            //Tiek ievietots datubāzē iepriekš izveidotais žetons
             $token = [
                 "user_id"=> Auth::id(),
                 "token"=>$newToken,
+                "created_at"=>date('Y-m-d H:i:s'),
+                "updated_at"=>date('Y-m-d H:i:s'),
             ];
             Tokens::create($token);
+            //Tiek atgriezti dati, veiksmīgas pieslēgšanās gadījumā
+            //Tiek atgriezts arī žetons, ko prikšgalsistēmā saglabā, tas strādā kā atslēga datu apmaiņai
             return response()->json(["success"=>"OK", "link"=>"home", "user"=>$newToken],200 );
         }else{
+            //Ja pieslēgšanās notikusi neveiksmīgi, tiek atgriezts kļudu ziņojums
             $errors = [
-                "invalid" =>'Username or Passeord is incorrect'
+                "invalid" =>'Username or password is incorrect'
             ];
             return response()->json(["success"=>"ERR", 'errors'=>$errors], 422);
         }
@@ -115,6 +184,41 @@ class AuthenticationController extends Controller
             return response()->json(["status" => "err", "message" => "Something gone wrong"], 403);
 
         }
+    }
+    public function edit(Request $request){
+         $request->validate([
+            "email"=> "max:20|min:5|email",
+            "name"=> "max:15|min:2",
+            "password"=> "max:20|min:9",
+            "surname"=>"max:15|min:2"
+        ]);
+         $user = User::where("id", Session::get("user_id"))->first();
+        $data = new RequestFilter(["email", "name", "password", "surname", "img"]);
+        $data = $data->filter($request);
+        if (isset($data["password"])){
+            $data["password"] = Hash::make($data['password']);
+        }
+        if (isset($data["img"])){
+            $data["img"] = $this->imagesFunctions->compress($data["img"], 15);
+            if(!empty($user->img) && $user->img !== "images/DefaultProfileImage.jpg" ) {
+                unlink(storage_path('app/public/' . $user->img));
+            }
+        }
+       if(User::where("id", Session::get("user_id"))->update($data)){
+           return response()->json(
+               [
+                   "status"=>200,
+                   "message"=>"Profile updated successfully!"
+               ]
+           );
+       }else{
+           return response()->json(
+               [
+                   "statuss"=>300,
+                   "message"=>"Something gone wrong!"
+               ]
+           );
+       }
     }
 
     /**
@@ -154,6 +258,44 @@ class AuthenticationController extends Controller
         }else{
             return response()->json(["message" => "User logged in"], 300);
         }
+
+    }
+    public function get()
+    {
+        return User::with('blogs')->find(Session::get("user_id"));
+    }
+    public function getUserAccount(Request $request)
+    {
+        $user_id =Session::get("user_id");
+        $profile = User::with('blogs')->find(request("account_id"));
+        $followers = Followers::query()->where("account_id", request("account_id"))->with("user")->get();
+        $following = Followers::query()->where("user_id", request("account_id"))->with("account")->get();
+        $profile->followers = $followers;
+        $profile->following = $following;
+        $isFollower = $followers->contains(function ($follower) use ($user_id) {
+            return $follower->user_id == $user_id;
+        });
+
+        return response()->json([
+            "profile"=>$profile,
+            "isFollower"=>$isFollower,
+            "status" =>201,
+        ],201);
+
+    }
+    public function getProfile(Request $request)
+    {
+        $user_id =Session::get("user_id");
+        $profile = User::with('blogs')->find($user_id);
+        $followers = Followers::query()->where("account_id", $user_id)->with("user")->get();
+        $following = Followers::query()->where("user_id", $user_id)->with("account")->get();
+        $profile->followers = $followers;
+        $profile->following = $following;
+
+        return response()->json([
+            "profile"=>$profile,
+            "status" =>201,
+        ],201);
 
     }
 }

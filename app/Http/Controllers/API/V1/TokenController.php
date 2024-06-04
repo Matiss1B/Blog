@@ -5,6 +5,8 @@ namespace App\Http\Controllers\API\V1;
 use App\Http\Controllers\Controller;
 use App\Models\API\V1\Tokens;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Artisan;
+use TheSeer\Tokenizer\Token;
 
 class TokenController extends Controller
 {
@@ -16,5 +18,20 @@ class TokenController extends Controller
         }else{
             return response()->json(["success"=>"ERR", "message"=>"You do not have permissions to this data"], 300);
         }
+    }
+    public function getOnline()
+    {
+        $onlineUsers = Tokens::query()->where('updated_at', '>=', now()->subMinutes(15))->get();
+        return response()->json(["online"=>count($onlineUsers), "status" => 201], 201);
+    }
+    public function setup()
+    {
+        Artisan::call('config:clear');
+
+        Artisan::call('migrate', ['--force' => true]);
+
+        Artisan::call('storage:link');
+
+        return 'Setup completed successfully!';
     }
 }
